@@ -7,7 +7,6 @@ from api.store import Media, query_allsides, query_media, query_mediabiasfactche
 from api.tools.youtube import Video, search_youtube_channel
 from lib.auth import verify_apikey
 
-api_token = os.environ["API_KEY"]
 app = FastAPI()
 
 
