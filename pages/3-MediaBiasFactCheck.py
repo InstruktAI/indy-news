@@ -1,6 +1,11 @@
 import streamlit as st
+import streamlit.components.v1 as components
 
 from api.main import search_mediabiasfactcheck
+
+with open("index.html", "r") as f:
+    html_code = f.read()
+    components.html(html_code, height=0)
 
 st.sidebar.title("Indy News Search")
 st.title("Search MediaBiasFactCheck DB")
