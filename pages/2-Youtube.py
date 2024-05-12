@@ -20,11 +20,11 @@ First uses "Media" endpoint to find sources and then queries youtube for videos 
 )
 query = st.text_input("Search for topics/keywords...", value="israel", max_chars=255)
 
-max_channels = st.slider("Select max number of channels", 1, 25, (8))
+max_channels = st.slider("Select max number of channels", 1, 25, (12))
 max_videos_per_channel = st.slider(
     "Select max number of videos per channel", 1, 25, (3)
 )
-period_days = st.text_input("Period (days since now)", 1)
+period_days = st.text_input("Period (days since now)", 3)
 
 if query == "":
     st.stop()

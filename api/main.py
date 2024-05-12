@@ -46,7 +46,7 @@ async def search_media(
 @app.get("/youtube", response_model=List[Video])
 async def search_youtube(
     query: str,
-    period_days: int = 1,
+    period_days: int = 3,
     max_channels: int = 8,
     max_videos_per_channel: int = 3,
     _: None = Depends(verify_apikey),
