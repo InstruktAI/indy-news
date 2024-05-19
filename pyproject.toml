@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "doup"
 version = "0.1.1"
 license = { text = "GPL-3.0-only" }
-authors = [{ name = "Maurice Faber", email = "morriz@idiotz.nl" }]
+authors = [{ name = "Maurice Faber", email = "maurice@instrukt.ai" }]
 description = "Streamlit app and FastAPI to power Indy News assistant."
 readme = "README.md"
 classifiers = [

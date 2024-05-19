@@ -1,9 +1,14 @@
-import os
 from typing import Dict, List
 
 from fastapi import Depends, FastAPI
 
-from api.store import Media, query_allsides, query_media, query_mediabiasfactcheck
+from api.store import (
+    Media,
+    get_data,
+    query_allsides,
+    query_media,
+    query_mediabiasfactcheck,
+)
 from api.tools.youtube import Video, search_youtube_channel
 from lib.auth import verify_apikey
 
@@ -49,25 +54,44 @@ async def search_youtube(
     period_days: int = 3,
     max_channels: int = 8,
     max_videos_per_channel: int = 3,
+    channels: str = None,
+    get_descriptions: bool = False,
+    get_transcripts: bool = False,
     _: None = Depends(verify_apikey),
 ) -> List[Video]:
-    media = await query_media(query, top_k=max_channels * 2)
-    tmp = {}
+    tmp: Dict[str, List[Video]] = {}
+    if channels:
+        channels_arr = channels.split(",")
+        media = [
+            item
+            for item in get_data()
+            if item["Youtube"].replace("https://www.youtube.com/", "") in channels_arr
+        ]
+    else:
+        media = await query_media(query, top_k=max_channels * 2)
     for item in media:
-        if not "Youtube" in item or item["Youtube"] == "n/a":
+        if item["Youtube"] == "n/a":
             continue
         ret = search_youtube_channel(
-            item["Youtube"], query, period_days, max_videos_per_channel
+            item["Youtube"],
+            query,
+            period_days,
+            max_videos_per_channel,
+            get_descriptions,
+            get_transcripts,
         )
         if len(ret) > 0:
-            tmp[item["Name"]] = ret
+            if len(ret) > max_videos_per_channel:
+                tmp[item["Name"]] = ret[:max_videos_per_channel]
+            else:
+                tmp[item["Name"]] = ret
         if len(tmp.keys()) >= max_channels:
             break
-    ret = []
-    for item in tmp.values():
-        ret.extend(item)
-    print("Number of videos found: " + str(len(ret)))
-    return ret
+    res: List[Video] = []
+    for videos in tmp.values():
+        res.extend(videos)
+    print("Number of videos found: " + str(len(res)))
+    return res
 
 
 @app.get("/privacy")

@@ -22,7 +22,7 @@ query = st.text_input("Search for topics/keywords...", value="israel", max_chars
 
 max_channels = st.slider("Select max number of channels", 1, 25, (12))
 max_videos_per_channel = st.slider(
-    "Select max number of videos per channel", 1, 25, (3)
+    "Select max number of videos per channel", 1, 25, (1)
 )
 period_days = st.text_input("Period (days since now)", 3)
 
@@ -39,7 +39,7 @@ async def get_youtube_results() -> None:
         #     st.markdown(
         #         f"[{item['title']}](https://www.youtube.com{item['url_suffix']})",
         #     )
-        st.video(f"https://www.youtube.com{item['url_suffix']}")
+        st.video(f"https://www.youtube.com{item.url_suffix}")
 
 
 asyncio.run(get_youtube_results())

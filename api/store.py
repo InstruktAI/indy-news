@@ -57,7 +57,7 @@ def _merge_facts(df: pd.DataFrame, facts: Dict[str, Dict[str, str]]) -> pd.DataF
     return df.apply(merge_fact, axis=1)
 
 
-def _get_data() -> List[Dict[str, str]]:
+def get_data() -> List[Dict[str, str]]:
     combined = "data/combined.json"
     if os.path.exists(combined):
         with open(combined, encoding="utf-8") as f:
@@ -85,7 +85,7 @@ def _get_documents() -> List[Document]:
     - About
     - Topics
     """
-    data = _get_data()
+    data = get_data()
     documents = []
     # iterate over the list of data and keep track of the index
     for i, item in enumerate(data):
@@ -157,7 +157,7 @@ def _extract_node_data(nodes: list[NodeWithScore]) -> list[Media]:
     """
     We need to map the nodes back to the original json data.
     """
-    data = _get_data()
+    data = get_data()
     selection = []
     for node in nodes:
         item = data[node.metadata["json_doc_id"]]

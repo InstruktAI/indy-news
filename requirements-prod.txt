@@ -1,3 +1,5 @@
+munch
+webdriver-manager
 faiss-cpu
 fastapi
 llama_index
@@ -7,5 +9,7 @@ llama-index-vector-stores-faiss
 openai
 pyyaml
 rank-bm25
+selenium
 streamlit
 uvicorn
+youtube-transcript-api

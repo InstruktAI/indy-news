@@ -13,7 +13,8 @@
       "justMyCode": false,
       "env": {
         "PYTHONPATH": "${workspaceRoot}"
-      }
+      },
+      "envFile": "${workspaceFolder}/.env"
     },
     {
       "name": "streamlit debug",
@@ -24,7 +25,8 @@
       "justMyCode": true,
       "env": {
         "PYTHONPATH": "${workspaceRoot}"
-      }
+      },
+      "envFile": "${workspaceFolder}/.env"
     }
   ]
 }
