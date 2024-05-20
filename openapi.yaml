@@ -153,16 +153,17 @@ paths:
       parameters:
       - name: query
         in: query
-        required: true
+        required: false
         schema:
           type: string
+          default: ''
           title: Query
       - name: period_days
         in: query
         required: false
         schema:
           type: integer
-          default: 1
+          default: 3
           title: Period Days
       - name: max_channels
         in: query
@@ -178,6 +179,26 @@ paths:
           type: integer
           default: 3
           title: Max Videos Per Channel
+      - name: channels
+        in: query
+        required: false
+        schema:
+          type: string
+          title: Channels
+      - name: get_descriptions
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
+          title: Get Descriptions
+      - name: get_transcripts
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
+          title: Get Transcripts
       responses:
         '200':
           description: Successful Response
@@ -313,11 +334,11 @@ components:
         title:
           type: string
           title: Title
-        long_desc:
+        short_desc:
           anyOf:
           - type: string
           - type: 'null'
-          title: Long Desc
+          title: Short Desc
         channel:
           type: string
           title: Channel
@@ -339,12 +360,21 @@ components:
         url_suffix:
           type: string
           title: Url Suffix
+        long_desc:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Long Desc
+        transcript:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Transcript
       type: object
       required:
       - id
       - thumbnails
       - title
-      - long_desc
       - channel
       - duration
       - views

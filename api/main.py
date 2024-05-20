@@ -1,6 +1,6 @@
 from typing import Dict, List
 
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, HTTPException
 
 from api.store import (
     Media,
@@ -50,7 +50,7 @@ async def search_media(
 
 @app.get("/youtube", response_model=List[Video])
 async def search_youtube(
-    query: str,
+    query: str = "",
     period_days: int = 3,
     max_channels: int = 8,
     max_videos_per_channel: int = 3,
@@ -61,13 +61,18 @@ async def search_youtube(
 ) -> List[Video]:
     tmp: Dict[str, List[Video]] = {}
     if channels:
-        channels_arr = channels.split(",")
+        channels_arr = channels.lower().split(",")
         media = [
             item
             for item in get_data()
-            if item["Youtube"].replace("https://www.youtube.com/", "") in channels_arr
+            if item["Youtube"].lower().replace("https://www.youtube.com/", "")
+            in channels_arr
         ]
     else:
+        if query == "":
+            raise HTTPException(
+                status_code=400, detail="No query given when no channels are provided!"
+            )
         media = await query_media(query, top_k=max_channels * 2)
     for item in media:
         if item["Youtube"] == "n/a":

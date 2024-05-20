@@ -121,7 +121,7 @@ def _parse_html_video(html: str) -> Dict[str, str]:
 @cache(ttl=3600)
 def search_youtube_channel(
     channel_url: str,
-    search_terms: str,
+    query: str,
     period_days: int,
     max_results: int,
     get_descriptions: bool = False,
@@ -134,9 +134,7 @@ def search_youtube_channel(
     day = time.strftime("%d", time.localtime(start)).zfill(2)
     month = time.strftime("%m", time.localtime(start)).zfill(2)
     year = time.strftime("%Y", time.localtime(start))
-    encoded_search = urllib.parse.quote_plus(
-        f"{search_terms} after:{year}-{month}-{day}"
-    )
+    encoded_search = urllib.parse.quote_plus(f"{query} after:{year}-{month}-{day}")
     url = f"{channel_url}/search?hl=en&query={encoded_search}"
 
     html = ""
@@ -144,7 +142,7 @@ def search_youtube_channel(
     while "ytInitialData" not in html:
         response = requests.get(url)
         if response.status_code != 200:
-            print(f"Failed to get search results for {search_terms} from {channel_url}")
+            print(f"Failed to get search results for {query} from {channel_url}")
             nothing = True
             break
         html = response.text
@@ -181,6 +179,16 @@ def _get_video_info(video_id: str) -> Dict[str, str]:
 
 
 def _get_video_transcript(video_id: str) -> str:
-    transcripts = YouTubeTranscriptApi.get_transcript(video_id)
-    transcript = ", ".join([t["text"] for t in transcripts])
-    return transcript
+    try:
+        transcripts = YouTubeTranscriptApi.get_transcript(
+            video_id, preserve_formatting=True
+        )
+        transcript = ", ".join(
+            [
+                str(t["start"]).split(".")[0] + "s" + ": " + t["text"]
+                for t in transcripts
+            ]
+        )
+        return transcript
+    except:
+        return ""
