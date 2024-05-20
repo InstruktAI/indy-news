@@ -37,6 +37,7 @@ class Video(BaseModel):
     title: str
     short_desc: Union[str, None] = None
     channel: str
+    channel_url: Union[str, None] = None
     duration: Union[str, int]
     views: Union[str, int]
     publish_time: Union[str, int]
@@ -151,6 +152,7 @@ def search_youtube_channel(
         return []
     results = _parse_html_list(html, max_results)
     for video in results:
+        video.channel_url = channel_url
         if get_descriptions:
             video_info = _get_video_info(video.id)
             video.long_desc = video_info.get("long_desc")
