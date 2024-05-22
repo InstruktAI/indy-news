@@ -145,6 +145,8 @@ paths:
   /media-videos:
     get:
       summary: Get Youtube Search
+      description: Get the details of matching videos by either providing Youtube
+        channels, a query, or both
       operationId: get_youtube_search_media_videos_get
       security:
       - APIKeyQuery: []
@@ -217,6 +219,7 @@ paths:
   /youtube-transcripts:
     get:
       summary: Get Youtube Transcripts
+      description: Extract transcripts from a list of Youtube video ids
       operationId: get_youtube_transcripts_youtube_transcripts_get
       security:
       - APIKeyQuery: []
@@ -235,9 +238,9 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                additionalProperties:
-                  type: string
+                type: array
+                items:
+                  $ref: '#/components/schemas/VideoTranscript'
                 title: Response Get Youtube Transcripts Youtube Transcripts Get
         '422':
           description: Validation Error
@@ -411,6 +414,20 @@ components:
       - url_suffix
       title: Video
       description: Video model
+    VideoTranscript:
+      properties:
+        id:
+          type: string
+          title: Id
+        text:
+          type: string
+          title: Text
+      type: object
+      required:
+      - id
+      - text
+      title: VideoTranscript
+      description: Video transcript model
   securitySchemes:
     APIKeyQuery:
       type: apiKey

@@ -3,8 +3,7 @@ import asyncio
 import streamlit as st
 import streamlit.components.v1 as components
 
-from api.main import youtube_search
-from api.tools.youtube import youtube_search
+from api.youtube import youtube_search
 
 with open("index.html", "r") as f:
     html_code = f.read()

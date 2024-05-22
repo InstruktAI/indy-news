@@ -34,6 +34,13 @@ class Transcript(BaseModel):
     duration: int
 
 
+class VideoTranscript(BaseModel):
+    """Video transcript model"""
+
+    id: str
+    text: str
+
+
 class Video(BaseModel):
     """Video model"""
 
@@ -136,9 +143,6 @@ async def youtube_search(
     get_descriptions: bool = False,
     get_transcripts: bool = False,
 ) -> List[Video]:
-    """
-    Get the details of matching videos by either providing Youtube channels, a query, or both
-    """
     if channels:
         channels_arr = channels.lower().split(",")
         media = [
@@ -184,14 +188,14 @@ async def youtube_search(
 @cache(ttl=3600)
 def youtube_transcripts(
     ids: str,
-) -> Dict[str, str]:
+) -> List[VideoTranscript]:
     """
     Extract transcripts from a list of Youtube video ids
     """
-    results: Dict[str, str] = {}
+    results: List[VideoTranscript] = []
     for video_id in ids.split(","):
         transcript = _get_video_transcript(video_id, strip_timestamps=True)
-        results[video_id] = transcript
+        results.append(VideoTranscript(id=video_id, text=transcript))
     return results
 
 

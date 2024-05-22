@@ -9,7 +9,7 @@ from api.store import (
     query_media,
     query_mediabiasfactcheck,
 )
-from api.tools.youtube import Video, youtube_search, youtube_transcripts
+from api.youtube import Video, VideoTranscript, youtube_search, youtube_transcripts
 from lib.auth import verify_apikey
 
 app = FastAPI()
@@ -59,6 +59,9 @@ async def get_youtube_search(
     get_transcripts: bool = False,
     _: None = Depends(verify_apikey),
 ) -> List[Video]:
+    """
+    Get the details of matching videos by either providing Youtube channels, a query, or both
+    """
     if not (channels or query):
         raise HTTPException(
             status_code=400, detail="No query given when no channels are provided!"
@@ -74,11 +77,14 @@ async def get_youtube_search(
     )
 
 
-@app.get("/youtube-transcripts", response_model=Dict[str, str])
+@app.get("/youtube-transcripts", response_model=List[VideoTranscript])
 async def get_youtube_transcripts(
     ids: str,
     _: None = Depends(verify_apikey),
 ) -> Dict[str, str]:
+    """
+    Extract transcripts from a list of Youtube video ids
+    """
     return youtube_transcripts(ids)
 
 
