@@ -142,21 +142,26 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-  /youtube:
+  /media-videos:
     get:
-      summary: Search Youtube
-      operationId: search_youtube_youtube_get
+      summary: Get Youtube Search
+      operationId: get_youtube_search_media_videos_get
       security:
       - APIKeyQuery: []
       - APIKeyHeader: []
       - HTTPBearer: []
       parameters:
+      - name: channels
+        in: query
+        required: false
+        schema:
+          type: string
+          title: Channels
       - name: query
         in: query
         required: false
         schema:
           type: string
-          default: ''
           title: Query
       - name: period_days
         in: query
@@ -179,12 +184,6 @@ paths:
           type: integer
           default: 3
           title: Max Videos Per Channel
-      - name: channels
-        in: query
-        required: false
-        schema:
-          type: string
-          title: Channels
       - name: get_descriptions
         in: query
         required: false
@@ -208,7 +207,38 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Video'
-                title: Response Search Youtube Youtube Get
+                title: Response Get Youtube Search Media Videos Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /youtube-transcripts:
+    get:
+      summary: Get Youtube Transcripts
+      operationId: get_youtube_transcripts_youtube_transcripts_get
+      security:
+      - APIKeyQuery: []
+      - APIKeyHeader: []
+      - HTTPBearer: []
+      parameters:
+      - name: ids
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Ids
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: string
+                title: Response Get Youtube Transcripts Youtube Transcripts Get
         '422':
           description: Validation Error
           content:
@@ -326,11 +356,6 @@ components:
         id:
           type: string
           title: Id
-        thumbnails:
-          items:
-            type: string
-          type: array
-          title: Thumbnails
         title:
           type: string
           title: Title
@@ -342,6 +367,11 @@ components:
         channel:
           type: string
           title: Channel
+        channel_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Channel Url
         duration:
           anyOf:
           - type: string
@@ -373,7 +403,6 @@ components:
       type: object
       required:
       - id
-      - thumbnails
       - title
       - channel
       - duration

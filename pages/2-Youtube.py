@@ -3,7 +3,8 @@ import asyncio
 import streamlit as st
 import streamlit.components.v1 as components
 
-from api.main import search_youtube
+from api.main import youtube_search
+from api.tools.youtube import youtube_search
 
 with open("index.html", "r") as f:
     html_code = f.read()
@@ -19,6 +20,11 @@ First uses "Media" endpoint to find sources and then queries youtube for videos 
 """
 )
 query = st.text_input("Search for topics/keywords...", value="israel", max_chars=255)
+channels = st.text_input(
+    "Provide channels to search in...",
+    max_chars=255,
+    placeholder="@AlJazeeraEnglish,@DemocracyNow",
+)
 
 max_channels = st.slider("Select max number of channels", 1, 25, (12))
 max_videos_per_channel = st.slider(
@@ -31,8 +37,12 @@ if query == "":
 
 
 async def get_youtube_results() -> None:
-    results = await search_youtube(
-        query, period_days, max_channels, max_videos_per_channel
+    results = await youtube_search(
+        query=query,
+        channels=channels,
+        period_days=period_days,
+        max_channels=max_channels,
+        max_videos_per_channel=max_videos_per_channel,
     )
 
     for item in results:

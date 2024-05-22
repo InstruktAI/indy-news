@@ -1,3 +1,4 @@
+import asyncio
 import json
 import time
 import urllib.parse
@@ -5,6 +6,8 @@ from collections import namedtuple
 from typing import Dict, List, Union
 
 import requests
+from aiohttp import ClientSession
+from fastapi import HTTPException
 from munch import munchify
 from pydantic import BaseModel
 from selenium import webdriver
@@ -15,6 +18,8 @@ from webdriver_manager.chrome import ChromeDriverManager, DriverManager
 from webdriver_manager.core.os_manager import ChromeType
 from youtube_transcript_api import YouTubeTranscriptApi
 
+from api.store import get_data, query_media
+from lib.cache import async_threadsafe_ttl_cache
 from lib.cache import sync_threadsafe_ttl_cache as cache
 
 options: Options = Options()
@@ -33,7 +38,7 @@ class Video(BaseModel):
     """Video model"""
 
     id: str
-    thumbnails: List[str]
+    # thumbnails: List[str]
     title: str
     short_desc: Union[str, None] = None
     channel: str
@@ -69,10 +74,10 @@ def _parse_html_list(html: str, max_results: int) -> List[Video]:
                 res: Dict[str, Union[str, List[str], int, None]] = {}
                 video_data = video.get("videoRenderer", {})
                 res["id"] = video_data.get("videoId", None)
-                res["thumbnails"] = [
-                    thumb.get("url", None)
-                    for thumb in video_data.get("thumbnail", {}).get("thumbnails", [{}])
-                ]
+                # res["thumbnails"] = [
+                #     thumb.get("url", None)
+                #     for thumb in video_data.get("thumbnail", {}).get("thumbnails", [{}])
+                # ]
                 res["title"] = (
                     video_data.get("title", {}).get("runs", [[{}]])[0].get("text", None)
                 )
@@ -100,6 +105,8 @@ def _parse_html_list(html: str, max_results: int) -> List[Video]:
                 results.append(Video(**res))
                 if len(results) >= int(max_results):
                     break
+        if len(results) >= int(max_results):
+            break
 
     return results
 
@@ -119,15 +126,30 @@ def _parse_html_video(html: str) -> Dict[str, str]:
     return result
 
 
-@cache(ttl=3600)
-def search_youtube_channel(
-    channel_url: str,
+@async_threadsafe_ttl_cache(ttl=3600)
+async def youtube_search(
+    channels: str,
     query: str,
     period_days: int,
-    max_results: int,
+    max_channels: int,
+    max_videos_per_channel: int,
     get_descriptions: bool = False,
     get_transcripts: bool = False,
 ) -> List[Video]:
+    """
+    Get the details of matching videos by either providing Youtube channels, a query, or both
+    """
+    if channels:
+        channels_arr = channels.lower().split(",")
+        media = [
+            item
+            for item in get_data()
+            if item["Youtube"].lower().replace("https://www.youtube.com/", "")
+            in channels_arr
+        ]
+    else:
+        media = await query_media(query, top_k=max_channels * 2)
+
     # calculate day and month from today minus period_days:
     today = time.time()
     period = int(period_days) * 24 * 3600
@@ -136,58 +158,92 @@ def search_youtube_channel(
     month = time.strftime("%m", time.localtime(start)).zfill(2)
     year = time.strftime("%Y", time.localtime(start))
     encoded_search = urllib.parse.quote_plus(f"{query} after:{year}-{month}-{day}")
-    url = f"{channel_url}/search?hl=en&query={encoded_search}"
+    tasks = []
+    for item in media:
+        channel_url = item["Youtube"]
+        if channel_url == "n/a":
+            continue
+        url = f"{channel_url}/search?hl=en&query={encoded_search}"
+        tasks.append(
+            _get_channel_videos(
+                url,
+                max_videos_per_channel,
+                channel_url,
+                get_descriptions,
+                get_transcripts,
+            )
+        )
+    results = await asyncio.gather(*tasks)
+    res: List[Video] = []
+    for videos in results:
+        res.extend(videos)
+    print("Number of videos found: " + str(len(res)))
+    return res
 
-    html = ""
-    nothing = False
-    while "ytInitialData" not in html:
-        response = requests.get(url)
-        if response.status_code != 200:
-            print(f"Failed to get search results for {query} from {channel_url}")
-            nothing = True
-            break
-        html = response.text
-        time.sleep(0.1)
-    if nothing:
-        return []
-    results = _parse_html_list(html, max_results)
-    for video in results:
-        video.channel_url = channel_url
-        if get_descriptions:
-            video_info = _get_video_info(video.id)
-            video.long_desc = video_info.get("long_desc")
-        if get_transcripts:
-            transcript = _get_video_transcript(video.id)
-            video.transcript = transcript
+
+@cache(ttl=3600)
+def youtube_transcripts(
+    ids: str,
+) -> Dict[str, str]:
+    """
+    Extract transcripts from a list of Youtube video ids
+    """
+    results: Dict[str, str] = {}
+    for video_id in ids.split(","):
+        transcript = _get_video_transcript(video_id, strip_timestamps=True)
+        results[video_id] = transcript
     return results
 
 
-def _get_video_info(video_id: str) -> Dict[str, str]:
+async def _get_channel_videos(
+    url: str,
+    max_videos_per_channel: int,
+    channel: str,
+    get_descriptions: bool,
+    get_transcripts: bool,
+) -> List[Video]:
+    # cookie to bypass consent, as found here:
+    # https://stackoverflow.com/questions/74127649/is-there-a-way-to-skip-youtubes-before-you-continue-to-youtube-cookies-messag
+    async with ClientSession() as session:
+        response = await session.get(
+            url, headers={"Cookie": "SOCS=CAESEwgDEgk0ODE3Nzk3MjQaAmVuIAEaBgiA_LyaBg"}
+        )
+        html = await response.text()
+        videos = _parse_html_list(html, max_results=max_videos_per_channel)
+        channel_url = f"https://www.youtube.com/{channel}"
+        for video in videos:
+            video.channel_url = channel_url
+            if get_descriptions:
+                video_info = await _get_video_info(session, video.id)
+                video.long_desc = video_info.get("long_desc")
+            if get_transcripts:
+                transcript = _get_video_transcript(video.id)
+                video.transcript = transcript
+        return videos
+
+
+async def _get_video_info(session: ClientSession, video_id: str) -> Dict[str, str]:
     url = f"https://www.youtube.com/watch?v={video_id}"
-    html = ""
-    nothing = False
-    while "ytInitialData" not in html:
-        response = requests.get(url)
-        if response.status_code != 200:
-            print(f"Failed to get video with id {video_id}")
-            nothing = True
-            break
-        html = response.text
-        time.sleep(0.1)
-    if nothing:
-        return {}
+    response = await session.get(
+        url, headers={"Cookie": "SOCS=CAESEwgDEgk0ODE3Nzk3MjQaAmVuIAEaBgiA_LyaBg"}
+    )
+    html = await response.text()
     result = _parse_html_video(html)
     return result
 
 
-def _get_video_transcript(video_id: str) -> str:
+def _get_video_transcript(video_id: str, strip_timestamps: bool = False) -> str:
     try:
         transcripts = YouTubeTranscriptApi.get_transcript(
             video_id, preserve_formatting=True
         )
-        transcript = ", ".join(
+        transcript = " ".join(
             [
-                str(t["start"]).split(".")[0] + "s" + ": " + t["text"]
+                (
+                    str(t["start"]).split(".")[0] + "s" + ": " + t["text"]
+                    if not strip_timestamps
+                    else t["text"]
+                )
                 for t in transcripts
             ]
         )
