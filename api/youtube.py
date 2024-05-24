@@ -151,9 +151,10 @@ async def youtube_search(
     char_cap: int = None,
 ) -> List[Video]:
     if channels:
-        channels_arr = [
-            "@" + channel.replace("@", "") for channel in channels.lower().split(",")
-        ]
+        channels_arr = _fix_channels(
+            ["@" + channel.replace("@", "") for channel in channels.lower().split(",")]
+        )
+
     else:
         media = await query_media(query, top_k=max_channels * 2)
         channels_arr = [item["Youtube"] for item in media][:max_channels]
@@ -170,19 +171,28 @@ async def youtube_search(
     tasks = []
     if len(channels_arr) == 0:
         return []
-    for channel in channels_arr:
-        if channel == "n/a":
-            continue
-        url = f"https://www.youtube.com/{channel}/search?hl=en&query={encoded_search}"
-        tasks.append(
-            _get_channel_videos(
-                url,
-                max_videos_per_channel,
-                get_descriptions,
-                get_transcripts,
+    try:
+        for channel in channels_arr:
+            if channel == "n/a":
+                continue
+            url = (
+                f"https://www.youtube.com/{channel}/search?hl=en&query={encoded_search}"
             )
-        )
-    results = await asyncio.gather(*tasks)
+            tasks.append(
+                _get_channel_videos(
+                    channel=channel,
+                    url=url,
+                    max_videos_per_channel=max_videos_per_channel,
+                    get_descriptions=get_descriptions,
+                    get_transcripts=get_transcripts,
+                )
+            )
+        results = await asyncio.gather(*tasks)
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise e
+
     res: List[Video] = []
     for videos in results:
         # a given query results in relevance sort, which is nice, but if no query was given we sort by publish time
@@ -205,7 +215,9 @@ def filter_by_char_cap(videos: List[Video], char_cap: int) -> List[Video]:
 
 def sort_by_publish_time(video: Video) -> float:
     now = datetime.datetime.now()
-    d = dateparser.parse(video.publish_time, settings={"RELATIVE_BASE": now})
+    d = dateparser.parse(
+        video.publish_time.replace("Streamed ", ""), settings={"RELATIVE_BASE": now}
+    )
     return time.mktime(d.timetuple())
 
 
@@ -223,7 +235,23 @@ def youtube_transcripts(
     return results
 
 
+def _fix_channels(channels: List[str]) -> List[str]:
+    data = get_data()
+    fixed_channels = []
+    for channel_raw in channels:
+        channel = channel_raw.replace("@", "")
+        # look up as partial match in our db
+        found = next((item for item in data if channel in item["Youtube"]), None)
+        if found:
+            fixed_channels.append(found["Youtube"])
+        # we always append, even if we did not correct it (which might throw a 400 later)
+        else:
+            fixed_channels.append(channel_raw)
+    return fixed_channels
+
+
 async def _get_channel_videos(
+    channel: str,
     url: str,
     max_videos_per_channel: int,
     get_descriptions: bool,
@@ -235,6 +263,11 @@ async def _get_channel_videos(
         response = await session.get(
             url, headers={"Cookie": "SOCS=CAESEwgDEgk0ODE3Nzk3MjQaAmVuIAEaBgiA_LyaBg"}
         )
+        if response.status != 200:
+            raise HTTPException(
+                status_code=400,
+                detail=f'Failed to fetch videos for channel "{channel}. The handle is probably incorrect."',
+            )
         html = await response.text()
         videos = _parse_html_list(html, max_results=max_videos_per_channel)
         for video in videos:
