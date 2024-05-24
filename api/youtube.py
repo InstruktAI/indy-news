@@ -61,6 +61,8 @@ class Video(BaseModel):
 
 def _parse_html_list(html: str, max_results: int) -> List[Video]:
     results: List[Video] = []
+    if not "ytInitialData" in html:
+        return []
     start = html.index("ytInitialData") + len("ytInitialData") + 3
     end = html.index("};", start) + 1
     json_str = html[start:end]
@@ -183,11 +185,13 @@ async def youtube_search(
     results = await asyncio.gather(*tasks)
     res: List[Video] = []
     for videos in results:
+        # a given query results in relevance sort, which is nice, but if no query was given we sort by publish time
+        if not query:
+            videos.sort(key=sort_by_publish_time)
         res.extend(videos)
     print("Number of videos found: " + str(len(res)))
     if char_cap:
         res = filter_by_char_cap(res, char_cap)
-        # res.sort(key=sort_by_publish_time)
     return res
 
 
