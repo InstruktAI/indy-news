@@ -3,7 +3,7 @@ import json
 import time
 import urllib.parse
 from collections import namedtuple
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 
 import requests
 from aiohttp import ClientSession
@@ -47,15 +47,14 @@ class Video(BaseModel):
     id: str
     # thumbnails: List[str]
     title: str
-    short_desc: Union[str, None] = None
+    short_desc: str
     channel: str
-    channel_url: Union[str, None] = None
-    duration: Union[str, int]
-    views: Union[str, int]
-    publish_time: Union[str, int]
+    duration: str
+    views: str
+    publish_time: str
     url_suffix: str
-    long_desc: Union[str, None] = None
-    transcript: Union[str, None] = None
+    long_desc: Optional[str] = None
+    transcript: Optional[str] = None
 
 
 def _parse_html_list(html: str, max_results: int) -> List[Video]:
@@ -86,28 +85,28 @@ def _parse_html_list(html: str, max_results: int) -> List[Video]:
                 #     for thumb in video_data.get("thumbnail", {}).get("thumbnails", [{}])
                 # ]
                 res["title"] = (
-                    video_data.get("title", {}).get("runs", [[{}]])[0].get("text", None)
+                    video_data.get("title", {}).get("runs", [[{}]])[0].get("text", "")
                 )
                 res["short_desc"] = (
                     video_data.get("descriptionSnippet", {})
                     .get("runs", [{}])[0]
-                    .get("text", None)
+                    .get("text", "")
                 )
                 res["channel"] = (
                     video_data.get("longBylineText", {})
                     .get("runs", [[{}]])[0]
                     .get("text", None)
                 )
-                res["duration"] = video_data.get("lengthText", {}).get("simpleText", 0)
-                res["views"] = video_data.get("viewCountText", {}).get("simpleText", 0)
+                res["duration"] = video_data.get("lengthText", {}).get("simpleText", "")
+                res["views"] = video_data.get("viewCountText", {}).get("simpleText", "")
                 res["publish_time"] = video_data.get("publishedTimeText", {}).get(
-                    "simpleText", 0
+                    "simpleText", ""
                 )
                 res["url_suffix"] = (
                     video_data.get("navigationEndpoint", {})
                     .get("commandMetadata", {})
                     .get("webCommandMetadata", {})
-                    .get("url", None)
+                    .get("url", "")
                 )
                 results.append(Video(**res))
                 if len(results) >= int(max_results):
@@ -133,26 +132,23 @@ def _parse_html_video(html: str) -> Dict[str, str]:
     return result
 
 
-# @async_threadsafe_ttl_cache(ttl=3600)
+@async_threadsafe_ttl_cache(ttl=3600)
 async def youtube_search(
-    channels: str,
-    period_days: int,
-    max_channels: int,
-    max_videos_per_channel: int,
-    query: str = "",
+    channels: str = None,
     get_descriptions: bool = False,
     get_transcripts: bool = False,
+    max_channels: int = None,
+    max_videos_per_channel: int = 3,
+    period_days: int = 3,
+    query: str = None,
 ) -> List[Video]:
     if channels:
-        channels_arr = channels.lower().split(",")
-        media = [
-            item
-            for item in get_data()
-            if item["Youtube"].lower().replace("https://www.youtube.com/", "")
-            in channels_arr
+        channels_arr = [
+            "@" + channel.replace("@", "") for channel in channels.lower().split(",")
         ]
     else:
         media = await query_media(query, top_k=max_channels * 2)
+        channels_arr = [item["Youtube"] for item in media]
 
     # calculate day and month from today minus period_days:
     today = time.time()
@@ -161,18 +157,19 @@ async def youtube_search(
     day = time.strftime("%d", time.localtime(start)).zfill(2)
     month = time.strftime("%m", time.localtime(start)).zfill(2)
     year = time.strftime("%Y", time.localtime(start))
-    encoded_search = urllib.parse.quote_plus(f"{query} after:{year}-{month}-{day}")
+    query_str = f"{query} " if query else ""
+    encoded_search = urllib.parse.quote_plus(f"{query_str}after:{year}-{month}-{day}")
     tasks = []
-    for item in media:
-        channel_url = item["Youtube"]
-        if channel_url == "n/a":
+    if len(channels_arr) == 0:
+        return []
+    for channel in channels_arr:
+        if channel == "n/a":
             continue
-        url = f"{channel_url}/search?hl=en&query={encoded_search}"
+        url = f"https://www.youtube.com/{channel}/search?hl=en&query={encoded_search}"
         tasks.append(
             _get_channel_videos(
                 url,
                 max_videos_per_channel,
-                channel_url,
                 get_descriptions,
                 get_transcripts,
             )
@@ -202,7 +199,6 @@ def youtube_transcripts(
 async def _get_channel_videos(
     url: str,
     max_videos_per_channel: int,
-    channel: str,
     get_descriptions: bool,
     get_transcripts: bool,
 ) -> List[Video]:
@@ -214,9 +210,7 @@ async def _get_channel_videos(
         )
         html = await response.text()
         videos = _parse_html_list(html, max_results=max_videos_per_channel)
-        channel_url = f"https://www.youtube.com/{channel}"
         for video in videos:
-            video.channel_url = channel_url
             if get_descriptions:
                 video_info = await _get_video_info(session, video.id)
                 video.long_desc = video_info.get("long_desc")

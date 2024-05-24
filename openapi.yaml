@@ -163,43 +163,71 @@ paths:
         in: query
         required: false
         schema:
-          type: string
-          title: Query
+          anyOf:
+          - type: string
+            minLength: 3
+          - type: 'null'
+          title: Query string
+          description: Query string used to match independent news channels and do
+            a youtube search with in those channels.
+          default: ''
+        description: Query string used to match independent news channels and do a
+          youtube search with in those channels.
       - name: period_days
         in: query
         required: false
         schema:
-          type: integer
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Period in days
+          description: The period in days since now that we want to search videos
+            for.
           default: 3
-          title: Period Days
+        description: The period in days since now that we want to search videos for.
       - name: max_channels
         in: query
         required: false
         schema:
-          type: integer
-          default: 8
-          title: Max Channels
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Max channels
+          description: Maximum number of channels that we want to match. Needed when
+            no channels were provided.
+        description: Maximum number of channels that we want to match. Needed when
+          no channels were provided.
       - name: max_videos_per_channel
         in: query
         required: false
         schema:
-          type: integer
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Max videos per channel
+          description: The maximum number of videos per channel that we want from
+            each channel search.
           default: 3
-          title: Max Videos Per Channel
+        description: The maximum number of videos per channel that we want from each
+          channel search.
       - name: get_descriptions
         in: query
         required: false
         schema:
           type: boolean
+          title: Get descriptions
+          description: Get the long descriptions for the videos.
           default: false
-          title: Get Descriptions
+        description: Get the long descriptions for the videos.
       - name: get_transcripts
         in: query
         required: false
         schema:
           type: boolean
+          title: Get transcripts
+          description: Get the transcripts for the videos.
           default: false
-          title: Get Transcripts
+        description: Get the transcripts for the videos.
       responses:
         '200':
           description: Successful Response
@@ -363,32 +391,19 @@ components:
           type: string
           title: Title
         short_desc:
-          anyOf:
-          - type: string
-          - type: 'null'
+          type: string
           title: Short Desc
         channel:
           type: string
           title: Channel
-        channel_url:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Channel Url
         duration:
-          anyOf:
-          - type: string
-          - type: integer
+          type: string
           title: Duration
         views:
-          anyOf:
-          - type: string
-          - type: integer
+          type: string
           title: Views
         publish_time:
-          anyOf:
-          - type: string
-          - type: integer
+          type: string
           title: Publish Time
         url_suffix:
           type: string
@@ -407,6 +422,7 @@ components:
       required:
       - id
       - title
+      - short_desc
       - channel
       - duration
       - views
