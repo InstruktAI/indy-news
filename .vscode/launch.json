@@ -17,6 +17,18 @@
       "envFile": "${workspaceFolder}/.env"
     },
     {
+      "name": "Python: gen openapi",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "bin/extract-openapi.py",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "env": {
+        "PYTHONPATH": "${workspaceRoot}"
+      },
+      "envFile": "${workspaceFolder}/.env"
+    },
+    {
       "name": "streamlit debug",
       "type": "debugpy",
       "request": "launch",

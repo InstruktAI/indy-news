@@ -215,7 +215,7 @@ paths:
           schema:
             type: boolean
             title: Get transcripts
-            default: false
+            default: true
           description: Get the transcripts for the videos.
       responses:
         '200':

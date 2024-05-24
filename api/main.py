@@ -95,7 +95,7 @@ async def get_youtube_search(
             title="Get transcripts",
             description="Get the transcripts for the videos.",
         ),
-    ] = False,
+    ] = True,
     _: None = Depends(verify_apikey),
 ) -> List[Video]:
     """
