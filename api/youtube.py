@@ -151,7 +151,7 @@ async def youtube_search(
         ]
     else:
         media = await query_media(query, top_k=max_channels * 2)
-        channels_arr = [item["Youtube"] for item in media]
+        channels_arr = [item["Youtube"] for item in media][:max_channels]
 
     # calculate day and month from today minus period_days:
     today = time.time()
