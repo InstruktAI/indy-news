@@ -118,29 +118,32 @@ def _parse_html_list(html: str, max_results: int) -> List[Video]:
 
 
 def _parse_html_video(html: str) -> Dict[str, str]:
-    result: Dict[str, str] = {}
+    result: Dict[str, str] = {"long_desc": None}
     start = html.index("ytInitialData") + len("ytInitialData") + 3
     end = html.index("};", start) + 1
     json_str = html[start:end]
     data = json.loads(json_str)
     obj = munchify(data)
-    result["long_desc"] = (
-        obj.contents.twoColumnWatchNextResults.results.results.contents[
-            1
-        ].videoSecondaryInfoRenderer.attributedDescription.content
-    )
+    try:
+        result["long_desc"] = (
+            obj.contents.twoColumnWatchNextResults.results.results.contents[
+                1
+            ].videoSecondaryInfoRenderer.attributedDescription.content
+        )
+    except:
+        pass
     return result
 
 
 @async_threadsafe_ttl_cache(ttl=3600)
 async def youtube_search(
+    query: str = None,
     channels: str = None,
-    get_descriptions: bool = False,
-    get_transcripts: bool = False,
+    period_days: int = 3,
     max_channels: int = None,
     max_videos_per_channel: int = 3,
-    period_days: int = 3,
-    query: str = None,
+    get_descriptions: bool = False,
+    get_transcripts: bool = False,
 ) -> List[Video]:
     if channels:
         channels_arr = [

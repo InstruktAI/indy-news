@@ -45,16 +45,16 @@ async def search_media(
 @app.get("/media-videos", response_model=List[Video])
 async def get_youtube_search(
     query: Annotated[
-        Optional[str],
+        str,
         Query(
             title="Query string",
             description="Query string used to match independent news channels and do a youtube search with in those channels.",
             min_length=3,
-            example="@aljazeeraenglish,@DemocracyNow",
+            example="israel",
         ),
     ] = None,
     channels: Annotated[
-        Optional[str],
+        str,
         Query(
             title="Channels to search in",
             description="A string of comma-separated Youtube channels to search in.",
@@ -62,21 +62,21 @@ async def get_youtube_search(
         ),
     ] = None,
     period_days: Annotated[
-        Optional[int],
+        int,
         Query(
             title="Period in days",
             description="The period in days since now that we want to search videos for.",
         ),
     ] = 3,
     max_channels: Annotated[
-        Optional[int],
+        int,
         Query(
             title="Max channels",
             description="Maximum number of channels that we want to match. Needed when no channels were provided.",
         ),
     ] = 12,
     max_videos_per_channel: Annotated[
-        Optional[int],
+        int,
         Query(
             title="Max videos per channel",
             description="The maximum number of videos per channel that we want from each channel search.",
