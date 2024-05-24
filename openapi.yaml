@@ -217,6 +217,13 @@ paths:
             title: Get transcripts
             default: true
           description: Get the transcripts for the videos.
+        - name: char_cap
+          in: query
+          required: false
+          schema:
+            type: integer
+            title: Max chars in the response
+          description: The maximum number of characters for the response.
       responses:
         '200':
           description: Successful Response

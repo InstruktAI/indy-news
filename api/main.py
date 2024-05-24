@@ -96,6 +96,13 @@ async def get_youtube_search(
             description="Get the transcripts for the videos.",
         ),
     ] = True,
+    char_cap: Annotated[
+        int,
+        Query(
+            title="Max chars in the response",
+            description="The maximum number of characters for the response.",
+        ),
+    ] = None,
     _: None = Depends(verify_apikey),
 ) -> List[Video]:
     """
@@ -120,6 +127,7 @@ async def get_youtube_search(
         max_videos_per_channel=max_videos_per_channel,
         get_descriptions=get_descriptions,
         get_transcripts=get_transcripts,
+        char_cap=char_cap,
     )
 
 

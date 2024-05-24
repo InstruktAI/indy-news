@@ -144,6 +144,7 @@ async def youtube_search(
     max_videos_per_channel: int = 3,
     get_descriptions: bool = False,
     get_transcripts: bool = False,
+    char_cap: int = None,
 ) -> List[Video]:
     if channels:
         channels_arr = [
@@ -182,6 +183,14 @@ async def youtube_search(
     for videos in results:
         res.extend(videos)
     print("Number of videos found: " + str(len(res)))
+    if char_cap:
+        capped = []
+        for idx, video in enumerate(videos):
+            capped.append(video)
+            if len(json.dumps(capped)) > char_cap:
+                break
+            return videos[0 : idx - 1]
+
     return res
 
 
