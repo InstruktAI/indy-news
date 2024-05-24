@@ -6,32 +6,33 @@ paths:
   /allsides:
     get:
       summary: Search Allsides
+      description: Search the AllSides database for a partial name
       operationId: search_allsides_allsides_get
       security:
-        - APIKeyQuery: []
-        - APIKeyHeader: []
-        - HTTPBearer: []
+      - APIKeyQuery: []
+      - APIKeyHeader: []
+      - HTTPBearer: []
       parameters:
-        - name: name
-          in: query
-          required: true
-          schema:
-            type: string
-            title: Name
-        - name: limit
-          in: query
-          required: false
-          schema:
-            type: integer
-            default: 5
-            title: Limit
-        - name: offset
-          in: query
-          required: false
-          schema:
-            type: integer
-            default: 0
-            title: Offset
+      - name: name
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Name
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 5
+          title: Limit
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 0
+          title: Offset
       responses:
         '200':
           description: Successful Response
@@ -53,32 +54,33 @@ paths:
   /mediabiasfactcheck:
     get:
       summary: Search Mediabiasfactcheck
+      description: Search the MediaBiasFactCheck database for a partial name
       operationId: search_mediabiasfactcheck_mediabiasfactcheck_get
       security:
-        - APIKeyQuery: []
-        - APIKeyHeader: []
-        - HTTPBearer: []
+      - APIKeyQuery: []
+      - APIKeyHeader: []
+      - HTTPBearer: []
       parameters:
-        - name: name
-          in: query
-          required: true
-          schema:
-            type: string
-            title: Name
-        - name: limit
-          in: query
-          required: false
-          schema:
-            type: integer
-            default: 5
-            title: Limit
-        - name: offset
-          in: query
-          required: false
-          schema:
-            type: integer
-            default: 0
-            title: Offset
+      - name: name
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Name
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 5
+          title: Limit
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 0
+          title: Offset
       responses:
         '200':
           description: Successful Response
@@ -100,32 +102,33 @@ paths:
   /media:
     get:
       summary: Search Media
+      description: Search the curated independent media database for a partial name
       operationId: search_media_media_get
       security:
-        - APIKeyQuery: []
-        - APIKeyHeader: []
-        - HTTPBearer: []
+      - APIKeyQuery: []
+      - APIKeyHeader: []
+      - HTTPBearer: []
       parameters:
-        - name: query
-          in: query
-          required: true
-          schema:
-            type: string
-            title: Query
-        - name: limit
-          in: query
-          required: false
-          schema:
-            type: integer
-            default: 5
-            title: Limit
-        - name: offset
-          in: query
-          required: false
-          schema:
-            type: integer
-            default: 0
-            title: Offset
+      - name: query
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Query
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 5
+          title: Limit
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 0
+          title: Offset
       responses:
         '200':
           description: Successful Response
@@ -145,85 +148,81 @@ paths:
   /media-videos:
     get:
       summary: Get Youtube Search
-      description:
-        Get the details of matching videos by either providing Youtube
+      description: Get the details of matching videos by either providing Youtube
         channels, a query, or both
       operationId: get_youtube_search_media_videos_get
       security:
-        - APIKeyQuery: []
-        - APIKeyHeader: []
-        - HTTPBearer: []
+      - APIKeyQuery: []
+      - APIKeyHeader: []
+      - HTTPBearer: []
       parameters:
-        - name: query
-          in: query
-          required: false
-          schema:
-            type: string
-            minLength: 3
-            title: Query string
-          description:
-            Query string used to match independent news channels and do a
-            youtube search with in those channels.
-          example: israel
-        - name: channels
-          in: query
-          required: false
-          schema:
-            type: string
-            title: Channels to search in
-          description: A string of comma-separated Youtube channels to search in.
-          example: '@aljazeeraenglish,@DemocracyNow'
-        - name: period_days
-          in: query
-          required: false
-          schema:
-            type: integer
-            title: Period in days
-            default: 3
-          description: The period in days since now that we want to search videos for.
-        - name: max_channels
-          in: query
-          required: false
-          schema:
-            type: integer
-            title: Max channels
-            default: 12
-          description:
-            Maximum number of channels that we want to match. Needed when
-            no channels were provided.
-        - name: max_videos_per_channel
-          in: query
-          required: false
-          schema:
-            type: integer
-            title: Max videos per channel
-            default: 3
-          description:
-            The maximum number of videos per channel that we want from each
-            channel search.
-        - name: get_descriptions
-          in: query
-          required: false
-          schema:
-            type: boolean
-            title: Get descriptions
-            default: false
-          description: Get the long descriptions for the videos.
-        - name: get_transcripts
-          in: query
-          required: false
-          schema:
-            type: boolean
-            title: Get transcripts
-            default: true
-          description: Get the transcripts for the videos.
-        - name: char_cap
-          in: query
-          required: false
-          schema:
-            type: integer
-            title: Max chars in the response
-          description: The maximum number of characters for the response.
+      - name: query
+        in: query
+        required: false
+        schema:
+          type: string
+          minLength: 3
+          title: Query string
+        description: Query string used to match independent news channels and do a
+          youtube search with in those channels.
+        example: israel
+      - name: channels
+        in: query
+        required: false
+        schema:
+          type: string
+          title: Channels to search in
+        description: A string of comma-separated Youtube channels to search in.
+        example: '@aljazeeraenglish,@DemocracyNow'
+      - name: period_days
+        in: query
+        required: false
+        schema:
+          type: integer
+          title: Period in days
+          default: 3
+        description: The period in days since now that we want to search videos for.
+      - name: max_channels
+        in: query
+        required: false
+        schema:
+          type: integer
+          title: Max channels
+          default: 12
+        description: Maximum number of channels that we want to match. Needed when
+          no channels were provided.
+      - name: max_videos_per_channel
+        in: query
+        required: false
+        schema:
+          type: integer
+          title: Max videos per channel
+          default: 3
+        description: The maximum number of videos per channel that we want from each
+          channel search.
+      - name: get_descriptions
+        in: query
+        required: false
+        schema:
+          type: boolean
+          title: Get descriptions
+          default: false
+        description: Get the long descriptions for the videos.
+      - name: get_transcripts
+        in: query
+        required: false
+        schema:
+          type: boolean
+          title: Get transcripts
+          default: true
+        description: Get the transcripts for the videos.
+      - name: char_cap
+        in: query
+        required: false
+        schema:
+          type: integer
+          title: Max chars in the response
+        description: The maximum number of characters for the response.
       responses:
         '200':
           description: Successful Response
@@ -246,16 +245,16 @@ paths:
       description: Extract transcripts from a list of Youtube video ids
       operationId: get_youtube_transcripts_youtube_transcripts_get
       security:
-        - APIKeyQuery: []
-        - APIKeyHeader: []
-        - HTTPBearer: []
+      - APIKeyQuery: []
+      - APIKeyHeader: []
+      - HTTPBearer: []
       parameters:
-        - name: ids
-          in: query
-          required: true
-          schema:
-            type: string
-            title: Ids
+      - name: ids
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Ids
       responses:
         '200':
           description: Successful Response
@@ -323,38 +322,38 @@ components:
           title: X
         Bias:
           anyOf:
-            - type: string
-            - type: 'null'
+          - type: string
+          - type: 'null'
           title: Bias
         Profile:
           anyOf:
-            - type: string
-            - type: 'null'
+          - type: string
+          - type: 'null'
           title: Profile
         Factual:
           anyOf:
-            - type: string
-            - type: 'null'
+          - type: string
+          - type: 'null'
           title: Factual
         Credibility:
           anyOf:
-            - type: string
-            - type: 'null'
+          - type: string
+          - type: 'null'
           title: Credibility
       type: object
       required:
-        - Name
-        - Website
-        - Youtube
-        - About
-        - TrustFactors
-        - Topics
-        - Wikipedia
-        - X
-        - Bias
-        - Profile
-        - Factual
-        - Credibility
+      - Name
+      - Website
+      - Youtube
+      - About
+      - TrustFactors
+      - Topics
+      - Wikipedia
+      - X
+      - Bias
+      - Profile
+      - Factual
+      - Credibility
       title: Media
       description: Media model
     ValidationError:
@@ -362,8 +361,8 @@ components:
         loc:
           items:
             anyOf:
-              - type: string
-              - type: integer
+            - type: string
+            - type: integer
           type: array
           title: Location
         msg:
@@ -374,9 +373,9 @@ components:
           title: Error Type
       type: object
       required:
-        - loc
-        - msg
-        - type
+      - loc
+      - msg
+      - type
       title: ValidationError
     Video:
       properties:
@@ -406,24 +405,24 @@ components:
           title: Url Suffix
         long_desc:
           anyOf:
-            - type: string
-            - type: 'null'
+          - type: string
+          - type: 'null'
           title: Long Desc
         transcript:
           anyOf:
-            - type: string
-            - type: 'null'
+          - type: string
+          - type: 'null'
           title: Transcript
       type: object
       required:
-        - id
-        - title
-        - short_desc
-        - channel
-        - duration
-        - views
-        - publish_time
-        - url_suffix
+      - id
+      - title
+      - short_desc
+      - channel
+      - duration
+      - views
+      - publish_time
+      - url_suffix
       title: Video
       description: Video model
     VideoTranscript:
@@ -436,8 +435,8 @@ components:
           title: Text
       type: object
       required:
-        - id
-        - text
+      - id
+      - text
       title: VideoTranscript
       description: Video transcript model
   securitySchemes:

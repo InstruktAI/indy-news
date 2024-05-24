@@ -1,10 +1,12 @@
 import asyncio
+import datetime
 import json
 import time
 import urllib.parse
 from collections import namedtuple
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
+import dateparser
 import requests
 from aiohttp import ClientSession
 from fastapi import HTTPException
@@ -140,7 +142,7 @@ async def youtube_search(
     query: str = None,
     channels: str = None,
     period_days: int = 3,
-    max_channels: int = None,
+    max_channels: int = 5,
     max_videos_per_channel: int = 3,
     get_descriptions: bool = False,
     get_transcripts: bool = False,
@@ -184,14 +186,23 @@ async def youtube_search(
         res.extend(videos)
     print("Number of videos found: " + str(len(res)))
     if char_cap:
-        capped = []
-        for idx, video in enumerate(videos):
-            capped.append(video)
-            if len(json.dumps(capped)) > char_cap:
-                break
-            return videos[0 : idx - 1]
-
+        res = filter_by_char_cap(res, char_cap)
+        # res.sort(key=sort_by_publish_time)
     return res
+
+
+def filter_by_char_cap(videos: List[Video], char_cap: int) -> List[Video]:
+    while len(json.dumps([vid.model_dump_json() for vid in videos])) > char_cap:
+        transcript_lengths = [len(video.transcript) for video in videos]
+        max_index = transcript_lengths.index(max(transcript_lengths))
+        videos.pop(max_index)
+    return videos
+
+
+def sort_by_publish_time(video: Video) -> float:
+    now = datetime.datetime.now()
+    d = dateparser.parse(video.publish_time, settings={"RELATIVE_BASE": now})
+    return time.mktime(d.timetuple())
 
 
 @cache(ttl=3600)

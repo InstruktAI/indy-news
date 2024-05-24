@@ -16,6 +16,7 @@ def search_allsides(
     offset: int = 0,
     _: None = Depends(verify_apikey),
 ) -> List[Dict[str, str]]:
+    """Search the AllSides database for a partial name"""
     results = query_allsides(name, limit, offset)
     return results[offset:]
 
@@ -27,6 +28,7 @@ def search_mediabiasfactcheck(
     offset: int = 0,
     _: None = Depends(verify_apikey),
 ) -> List[Dict[str, str]]:
+    """Search the MediaBiasFactCheck database for a partial name"""
     results = query_mediabiasfactcheck(name, limit, offset)
     return results[offset:]
 
@@ -38,6 +40,7 @@ async def search_media(
     offset: int = 0,
     _: None = Depends(verify_apikey),
 ) -> List[Media]:
+    """Search the curated independent media database for a partial name"""
     results = await query_media(query, top_k=limit + offset)
     return results[offset:]
 
@@ -74,14 +77,14 @@ async def get_youtube_search(
             title="Max channels",
             description="Maximum number of channels that we want to match. Needed when no channels were provided.",
         ),
-    ] = 12,
+    ] = 5,
     max_videos_per_channel: Annotated[
         int,
         Query(
             title="Max videos per channel",
             description="The maximum number of videos per channel that we want from each channel search.",
         ),
-    ] = 3,
+    ] = 2,
     get_descriptions: Annotated[
         bool,
         Query(
@@ -119,7 +122,7 @@ async def get_youtube_search(
                 status_code=400,
                 detail='"max_channels" must be provided when no "channels" are set!',
             )
-    return await youtube_search(
+    results = await youtube_search(
         channels=channels,
         query=query,
         period_days=period_days,
@@ -129,6 +132,7 @@ async def get_youtube_search(
         get_transcripts=get_transcripts,
         char_cap=char_cap,
     )
+    return results
 
 
 @app.get("/youtube-transcripts", response_model=List[VideoTranscript])
