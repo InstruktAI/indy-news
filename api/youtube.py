@@ -198,6 +198,7 @@ async def youtube_search(
         # a given query results in relevance sort, which is nice, but if no query was given we sort by publish time
         if not query:
             videos.sort(key=sort_by_publish_time)
+            videos = videos[::-1]
         res.extend(videos)
     print("Number of videos found: " + str(len(res)))
     if char_cap:
