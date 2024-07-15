@@ -1,9 +1,9 @@
 import asyncio
-import datetime
 import json
 import time
 import urllib.parse
 from collections import namedtuple
+from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
 
 import dateparser
@@ -215,7 +215,7 @@ def filter_by_char_cap(videos: List[Video], char_cap: int) -> List[Video]:
 
 
 def sort_by_publish_time(video: Video) -> float:
-    now = datetime.datetime.now()
+    now = datetime.now()
     d = dateparser.parse(
         video.publish_time.replace("Streamed ", ""), settings={"RELATIVE_BASE": now}
     )

@@ -28,12 +28,12 @@ if __name__ == "__main__":
     print(f"importing app from {args.app}")
     app = import_from_string(args.app)
     openapi = app.openapi()
-    # clean up unwanted props that custom GPTs don't like:
-    for path in openapi["paths"]:
-        for method in openapi["paths"][path]:
-            if "parameters" in openapi["paths"][path][method]:
-                for param in openapi["paths"][path][method]["parameters"]:
-                    if "description" in param["schema"]:
+    # clean up unwanted properties that custom GPTs don't like:
+    for path_data in openapi["paths"].values():
+        for method_data in path_data.values():
+            if "parameters" in method_data:
+                for param in method_data["parameters"]:
+                    if "schema" in param and "description" in param["schema"]:
                         del param["schema"]["description"]
 
     version = openapi.get("openapi", "unknown version")
