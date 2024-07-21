@@ -24,22 +24,52 @@ query = st.text_input(
     "Query (leave empty to get latest)...",
     placeholder="israel",
     max_chars=255,
+    value=(st.query_params.query if "query" in st.query_params else ""),
 )
 channels = st.text_input(
     "Optionally provide channels to search in...",
     max_chars=255,
     placeholder="aljazeeraenglish,DemocracyNow",
+    value=(st.query_params.channels if "channels" in st.query_params else ""),
 )
-max_channels = st.slider("Or select max number of channels", 1, 25, (12))
+max_channels = st.slider(
+    "Or select max number of channels",
+    1,
+    25,
+    st.query_params.max_channels if "max_channels" in st.query_params else 12,
+)
 
 max_videos_per_channel = st.slider(
-    "Select max number of videos per channel", 1, 25, (1)
+    "Select max number of videos per channel",
+    1,
+    25,
+    (
+        st.query_params.max_videos_per_channel
+        if "max_videos_per_channel" in st.query_params
+        else 2
+    ),
 )
-period_days = st.text_input("Period (days since now)", 3)
-show_as_videos = st.checkbox("Show as videos", value=True)
+period_days = st.text_input(
+    "Period (days since now)",
+    st.query_params.period_days if "period_days" in st.query_params else 3,
+)
+show_as_videos = st.checkbox(
+    "Show as videos",
+    value=(
+        st.query_params.show_as_videos if "show_as_videos" in st.query_params else True
+    ),
+)
+
 get_transcripts = False
 if not show_as_videos:
-    get_transcripts = st.checkbox("Get transcripts", value=False)
+    get_transcripts = st.checkbox(
+        "Get transcripts",
+        value=(
+            st.query_params.get_transcripts
+            if "get_transcripts" in st.query_params.get_transcripts
+            else False
+        ),
+    )
 
 if query == "" and channels == "":
     st.warning("Select at least either query or channels.")
