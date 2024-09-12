@@ -66,7 +66,7 @@ if not show_as_videos:
         "Get transcripts",
         value=(
             st.query_params.get_transcripts
-            if "get_transcripts" in st.query_params.get_transcripts
+            if "get_transcripts" in st.query_params
             else False
         ),
     )
