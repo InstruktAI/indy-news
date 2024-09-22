@@ -4,11 +4,11 @@ from typing import Dict, List, Union
 
 import faiss
 import pandas as pd
+from llama_index.core import Settings
 from llama_index.core.indices import load_index_from_storage
 from llama_index.core.indices.vector_store.base import VectorStoreIndex
 from llama_index.core.retrievers import VectorIndexRetriever
 from llama_index.core.schema import Document, NodeWithScore
-from llama_index.core.service_context import ServiceContext
 from llama_index.core.storage.storage_context import StorageContext
 from llama_index.embeddings.openai import OpenAIEmbedding
 from llama_index.retrievers.bm25 import BM25Retriever
@@ -22,6 +22,10 @@ allsides_file = "./data/allsides.com.json"
 mbfc_file = "./data/mediabiasfactcheck.com.json"
 csv_file = "./data/all.csv"
 persist_dir = "./db"
+
+d = 3072
+embed_model = OpenAIEmbedding(model_name="text-embedding-3-large", dimensions=d)
+Settings.embed_model = embed_model
 
 
 class Media(BaseModel):
@@ -103,9 +107,6 @@ def _get_index() -> VectorStoreIndex:
     exists = os.path.exists(persist_dir)
     print("DB exists: " + str(exists))
 
-    d = 3072
-    embed_model = OpenAIEmbedding(model_name="text-embedding-3-large", dimensions=d)
-    service_context = ServiceContext.from_defaults(embed_model=embed_model)
     index: VectorStoreIndex
     if exists:
         vector_store = FaissVectorStore.from_persist_dir(persist_dir)
@@ -113,16 +114,16 @@ def _get_index() -> VectorStoreIndex:
             vector_store=vector_store,
             persist_dir=persist_dir,
         )
-        index = load_index_from_storage(
-            storage_context=storage_context, service_context=service_context
-        )
+        index = load_index_from_storage(storage_context=storage_context)
     else:
         faiss_index = faiss.IndexFlatL2(d)
         vector_store = FaissVectorStore(faiss_index=faiss_index)
         storage_context = StorageContext.from_defaults(vector_store=vector_store)
         documents = _get_documents()
         index = VectorStoreIndex.from_documents(
-            documents, storage_context=storage_context, service_context=service_context
+            documents,
+            embed_model=embed_model,
+            storage_context=storage_context,
         )
         index.storage_context.persist(persist_dir=persist_dir)
     return index

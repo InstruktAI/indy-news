@@ -15,4 +15,5 @@ FROM python:3.11-slim
 WORKDIR /app
 COPY --from=base /app /app
 COPY . /app
+
 CMD [".venv/bin/uvicorn", "api.main:app", "--port", "8080", "--host", "0.0.0.0"]

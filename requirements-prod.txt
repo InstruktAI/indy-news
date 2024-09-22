@@ -6,7 +6,6 @@ llama-index-llms-openai
 llama-index-retrievers-bm25
 llama-index-vector-stores-faiss
 munch
-openai
 pyyaml
 rank-bm25
 selenium
