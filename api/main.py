@@ -77,7 +77,6 @@ async def get_youtube_search(
         Query(
             title="Max channels",
             description="Maximum number of channels that we want to match. Needed when no channels were provided.",
-            default=5,
         ),
     ] = 5,
     max_videos_per_channel: Annotated[
@@ -85,7 +84,6 @@ async def get_youtube_search(
         Query(
             title="Max videos per channel",
             description="The maximum number of videos per channel that we want from each channel search.",
-            default=2,
         ),
     ] = 2,
     get_descriptions: Annotated[
@@ -162,7 +160,6 @@ async def get_x_search(
         Query(
             title="Period in days",
             description="The period in days since now that we want to search tweets for.",
-            default=3,
         ),
     ] = 3,
     max_users: Annotated[
@@ -170,7 +167,6 @@ async def get_x_search(
         Query(
             title="Max users",
             description="Maximum number of users that we want to match. Needed when no users were provided.",
-            default=20,
         ),
     ] = 20,
     max_tweets_per_user: Annotated[
@@ -178,7 +174,6 @@ async def get_x_search(
         Query(
             title="Max tweets per user",
             description="The maximum number of tweets per user that we want from the search.",
-            default=20,
         ),
     ] = 20,
     _: None = Depends(verify_apikey),
