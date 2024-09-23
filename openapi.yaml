@@ -148,8 +148,7 @@ paths:
   /media-videos:
     get:
       summary: Get Youtube Search
-      description: Get the details of matching videos by either providing Youtube
-        channels, a query, or both
+      description: Find Youtube videos by either providing channels, a query, or both
       operationId: get_youtube_search_media_videos_get
       security:
       - APIKeyQuery: []
@@ -188,7 +187,7 @@ paths:
         schema:
           type: integer
           title: Max channels
-          default: 12
+          default: 5
         description: Maximum number of channels that we want to match. Needed when
           no channels were provided.
       - name: max_videos_per_channel
@@ -197,7 +196,7 @@ paths:
         schema:
           type: integer
           title: Max videos per channel
-          default: 3
+          default: 2
         description: The maximum number of videos per channel that we want from each
           channel search.
       - name: get_descriptions
@@ -233,6 +232,75 @@ paths:
                 items:
                   $ref: '#/components/schemas/Video'
                 title: Response Get Youtube Search Media Videos Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /media-tweets:
+    get:
+      summary: Get X Search
+      description: Find tweets on X by either providing users, a query, or both
+      operationId: get_x_search_media_tweets_get
+      security:
+      - APIKeyQuery: []
+      - APIKeyHeader: []
+      - HTTPBearer: []
+      parameters:
+      - name: query
+        in: query
+        required: false
+        schema:
+          type: string
+          minLength: 3
+          title: Query string
+        description: Query string used to match independent news users and do an X
+          tweet search.
+        example: israel
+      - name: users
+        in: query
+        required: false
+        schema:
+          type: string
+          title: Channels to search in
+        description: A string of comma-separated X users to search in.
+        example: AJenglish,democracynow
+      - name: period_days
+        in: query
+        required: false
+        schema:
+          type: integer
+          title: Period in days
+          default: 3
+        description: The period in days since now that we want to search tweets for.
+      - name: max_users
+        in: query
+        required: false
+        schema:
+          type: integer
+          title: Max users
+          default: 20
+        description: Maximum number of users that we want to match. Needed when no
+          users were provided.
+      - name: max_tweets_per_user
+        in: query
+        required: false
+        schema:
+          type: integer
+          title: Max tweets per user
+          default: 20
+        description: The maximum number of tweets per user that we want from the search.
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Tweet'
+                title: Response Get X Search Media Tweets Get
         '422':
           description: Validation Error
           content:
@@ -356,6 +424,49 @@ components:
       - Credibility
       title: Media
       description: Media model
+    Tweet:
+      properties:
+        id:
+          type: integer
+          title: Id
+        created_at_datetime:
+          type: string
+          format: date-time
+          title: Created At Datetime
+        text:
+          type: string
+          title: Text
+        lang:
+          type: string
+          title: Lang
+        hashtags:
+          items:
+            type: string
+          type: array
+          title: Hashtags
+        user:
+          $ref: '#/components/schemas/User'
+      type: object
+      required:
+      - id
+      - text
+      - lang
+      - hashtags
+      - user
+      title: Tweet
+    User:
+      properties:
+        id:
+          type: integer
+          title: Id
+        screen_name:
+          type: string
+          title: Screen Name
+      type: object
+      required:
+      - id
+      - screen_name
+      title: User
     ValidationError:
       properties:
         loc:

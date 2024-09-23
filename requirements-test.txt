@@ -6,3 +6,4 @@ pandas
 pyproject-fmt
 types-cachetools
 types-PyYAML
+watchdog

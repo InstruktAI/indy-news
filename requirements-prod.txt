@@ -10,6 +10,7 @@ pyyaml
 rank-bm25
 selenium
 streamlit
+twikit
 uvicorn
 webdriver-manager
 youtube-transcript-api

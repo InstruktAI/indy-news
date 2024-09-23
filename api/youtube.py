@@ -2,30 +2,20 @@ import asyncio
 import json
 import time
 import urllib.parse
-from collections import namedtuple
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 import dateparser
-import requests
 from aiohttp import ClientSession
 from fastapi import HTTPException
 from munch import munchify
 from pydantic import BaseModel
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service as ChromiumService
-from selenium.webdriver.support.wait import WebDriverWait
-from webdriver_manager.chrome import ChromeDriverManager, DriverManager
-from webdriver_manager.core.os_manager import ChromeType
 from youtube_transcript_api import YouTubeTranscriptApi
 
 from api.store import get_data, query_media
 from lib.cache import async_threadsafe_ttl_cache
 from lib.cache import sync_threadsafe_ttl_cache as cache
-
-options: Options = Options()
-options.add_argument("--headless")
+from lib.utils import get_since_date
 
 
 class Transcript(BaseModel):
@@ -147,7 +137,7 @@ async def youtube_search(
     max_channels: int = 5,
     max_videos_per_channel: int = 3,
     get_descriptions: bool = False,
-    get_transcripts: bool = False,
+    get_transcripts: bool = True,
     char_cap: int = None,
 ) -> List[Video]:
     if channels:
@@ -159,13 +149,7 @@ async def youtube_search(
         media = await query_media(query, top_k=max_channels * 2)
         channels_arr = [item["Youtube"] for item in media][:max_channels]
 
-    # calculate day and month from today minus period_days:
-    today = time.time()
-    period = int(period_days) * 24 * 3600
-    start = today - period
-    day = time.strftime("%d", time.localtime(start)).zfill(2)
-    month = time.strftime("%m", time.localtime(start)).zfill(2)
-    year = time.strftime("%Y", time.localtime(start))
+    [year, month, day] = get_since_date(period_days)
     query_str = f"{query} " if query else ""
     encoded_search = urllib.parse.quote_plus(f"{query_str}after:{year}-{month}-{day}")
     tasks = []

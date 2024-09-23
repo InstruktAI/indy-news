@@ -1,8 +1,9 @@
-from typing import Annotated, Dict, List, Optional, Union
+from typing import Annotated, Dict, List
 
 from fastapi import Depends, FastAPI, HTTPException, Query
 
 from api.store import Media, query_allsides, query_media, query_mediabiasfactcheck
+from api.x import Tweet, x_search
 from api.youtube import Video, VideoTranscript, youtube_search, youtube_transcripts
 from lib.auth import verify_apikey
 
@@ -109,7 +110,7 @@ async def get_youtube_search(
     _: None = Depends(verify_apikey),
 ) -> List[Video]:
     """
-    Get the details of matching videos by either providing Youtube channels, a query, or both
+    Find Youtube videos by either providing channels, a query, or both
     """
     if not (channels or query):
         raise HTTPException(
@@ -131,6 +132,72 @@ async def get_youtube_search(
         get_descriptions=get_descriptions,
         get_transcripts=get_transcripts,
         char_cap=char_cap,
+    )
+    return results
+
+
+@app.get("/media-tweets", response_model=List[Tweet])
+async def get_x_search(
+    query: Annotated[
+        str,
+        Query(
+            title="Query string",
+            description="Query string used to match independent news users and do an X tweet search.",
+            min_length=3,
+            example="israel",
+        ),
+    ] = None,
+    users: Annotated[
+        str,
+        Query(
+            title="Channels to search in",
+            description="A string of comma-separated X users to search in.",
+            example="AJenglish,democracynow",
+        ),
+    ] = None,
+    period_days: Annotated[
+        int,
+        Query(
+            title="Period in days",
+            description="The period in days since now that we want to search tweets for.",
+        ),
+    ] = 3,
+    max_users: Annotated[
+        int,
+        Query(
+            title="Max users",
+            description="Maximum number of users that we want to match. Needed when no users were provided.",
+        ),
+    ] = 20,
+    max_tweets_per_user: Annotated[
+        int,
+        Query(
+            title="Max tweets per user",
+            description="The maximum number of tweets per user that we want from the search.",
+        ),
+    ] = 20,
+    _: None = Depends(verify_apikey),
+) -> List[Tweet]:
+    """
+    Find tweets on X by either providing users, a query, or both
+    """
+    if not (users or query):
+        raise HTTPException(
+            status_code=400,
+            detail='Either one of "query" or "users" must be provided!',
+        )
+    if not users:
+        if not max_users:
+            raise HTTPException(
+                status_code=400,
+                detail='"max_users" must be provided when no "users" are set!',
+            )
+    results = await x_search(
+        query=query,
+        users=users,
+        period_days=period_days,
+        max_users=max_users,
+        max_tweets_per_user=max_tweets_per_user,
     )
     return results
 
