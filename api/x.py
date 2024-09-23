@@ -11,6 +11,7 @@ from twikit import Tweet as TwikitTweet
 from twikit import User as TwikitUser
 
 from api.store import get_data, query_media
+from lib.cache import async_threadsafe_ttl_cache
 from lib.utils import get_since_date
 
 dotenv.load_dotenv()
@@ -56,7 +57,7 @@ def get_client() -> Client:
     return client
 
 
-# @async_threadsafe_ttl_cache(ttl=3600)
+@async_threadsafe_ttl_cache(ttl=180)
 async def x_search(
     query: str = None,
     users: str = None,
@@ -80,7 +81,6 @@ async def x_search(
     query = f"{users_str}{query_str} since:{year}-{month}-{day}"
     if len(users_arr) == 0:
         return []
-    cursor: str = None
     tweets: List[Tweet] = []
     _tweets = await get_client().search_tweet(query=query, product="Latest", count=20)
     tweets.extend(_tweets)
