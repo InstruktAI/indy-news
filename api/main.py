@@ -150,7 +150,7 @@ async def get_x_search(
     users: Annotated[
         str,
         Query(
-            title="Channels to search in",
+            title="Users to search in",
             description="A string of comma-separated X users to search in.",
             example="AJenglish,democracynow",
         ),

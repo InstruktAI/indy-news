@@ -40,31 +40,19 @@ class Tweet(BaseModel, TwikitTweet):
     lang: str
     # Hashtags included in the tweet text.
     hashtags: List[str]
-    # URL of the tweet
-    url: str
     # User that created the tweet.
     user: User
 
 
-async def get_client() -> Client:
+def get_client() -> Client:
     # if exists, load cookies from file
     if client._user_id is not None:
         return client
-    cookie_file = "cache/x_cookies.txt"
-    cookie_file_json = "cache/x_cookies.json"
-    if os.path.exists(cookie_file):
-        cookie = SimpleCookie()
-        with open(cookie_file, "r", encoding="utf-8") as f:
-            rawdata: str = f.read()
-            cookie.load(rawdata)
-            cookies = {k: v.value for k, v in cookie.items()}
-            client.set_cookies(cookies)
-        return client
-    user = os.getenv("X_USER")
-    email = os.getenv("X_EMAIL")
-    password = os.getenv("X_PASSWORD")
-    await client.login(auth_info_1=user, auth_info_2=email, password=password)
-    client.save_cookies(cookie_file_json)
+    cookies_raw = os.getenv("X_COOKIES")
+    cookie = SimpleCookie()
+    cookie.load(cookies_raw)
+    cookies = {k: v.value for k, v in cookie.items()}
+    client.set_cookies(cookies)
     return client
 
 
@@ -92,10 +80,9 @@ async def x_search(
     query = f"{users_str}{query_str} since:{year}-{month}-{day}"
     if len(users_arr) == 0:
         return []
-    _client = await get_client()
     cursor: str = None
     tweets: List[Tweet] = []
-    _tweets = await _client.search_tweet(query=query, product="Latest", count=20)
+    _tweets = await get_client().search_tweet(query=query, product="Latest", count=20)
     tweets.extend(_tweets)
     while (len(_tweets) == 20) and len(tweets) < max_users * max_tweets_per_user:
         _tweets = await _tweets.next()
