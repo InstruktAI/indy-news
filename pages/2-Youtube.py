@@ -49,9 +49,11 @@ max_videos_per_channel = st.slider(
         else 2
     ),
 )
-period_days = st.text_input(
-    "Period (days since now)",
-    st.query_params.period_days if "period_days" in st.query_params else 3,
+period_days = int(
+    st.text_input(
+        "Period (days since now)",
+        st.query_params.period_days if "period_days" in st.query_params else 3,
+    )
 )
 show_as_videos = st.checkbox(
     "Show as videos",
