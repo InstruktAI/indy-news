@@ -46,7 +46,7 @@ async def search_media(
     return results[offset:]
 
 
-@app.get("/media-videos", response_model=List[Video])
+@app.get("/youtube", response_model=List[Video])
 async def get_youtube_search(
     query: Annotated[
         str,
@@ -144,7 +144,7 @@ async def get_youtube_search(
     return results
 
 
-@app.get("/media-tweets", response_model=List[Tweet])
+@app.get("/x", response_model=List[Tweet])
 async def get_x_search(
     query: Annotated[
         str,
@@ -218,7 +218,7 @@ async def get_x_search(
     return results
 
 
-@app.get("/media-news", response_model=List[Video | Tweet])
+@app.get("/news", response_model=List[Video | Tweet])
 async def get_news_search(
     query: Annotated[
         str,
@@ -287,20 +287,6 @@ async def get_news_search(
             description="The maximum number of tweets per user that we want from the search.",
         ),
     ] = 20,
-    get_descriptions: Annotated[
-        bool,
-        Query(
-            title="Get descriptions",
-            description="Get the long descriptions for the videos.",
-        ),
-    ] = False,
-    get_transcripts: Annotated[
-        bool,
-        Query(
-            title="Get transcripts",
-            description="Get the transcripts for the videos.",
-        ),
-    ] = True,
     char_cap: Annotated[
         int,
         Query(
