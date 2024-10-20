@@ -54,7 +54,7 @@ async def get_youtube_search(
             title="Query string",
             description="Query string used to match independent news channels and do a youtube search with in those channels.",
             min_length=3,
-            examples="israel",
+            examples=["israel"],
         ),
     ] = None,
     channels: Annotated[
@@ -62,7 +62,7 @@ async def get_youtube_search(
         Query(
             title="Channels to search in",
             description="A string of comma-separated Youtube channels to search in.",
-            examples="@aljazeeraenglish,@DemocracyNow",
+            examples=["@aljazeeraenglish,@DemocracyNow"],
         ),
     ] = None,
     period_days: Annotated[
@@ -152,7 +152,7 @@ async def get_x_search(
             title="Query string",
             description="Query string used to match independent news users and do an X tweet search.",
             min_length=3,
-            examples="israel",
+            examples=["israel"],
         ),
     ] = None,
     users: Annotated[
@@ -160,7 +160,7 @@ async def get_x_search(
         Query(
             title="Users to search in",
             description="A string of comma-separated X users to search in.",
-            examples="AJenglish,democracynow",
+            examples=["AJenglish,democracynow"],
         ),
     ] = None,
     period_days: Annotated[
@@ -226,7 +226,7 @@ async def get_news_search(
             title="Query string",
             description="Query string used to match independent news channels and do a youtube search with in those channels.",
             min_length=3,
-            examples="israel",
+            examples=["israel"],
         ),
     ] = None,
     channels: Annotated[
@@ -234,7 +234,7 @@ async def get_news_search(
         Query(
             title="Channels to search in",
             description="A string of comma-separated Youtube channels to search in.",
-            examples="@aljazeeraenglish,@DemocracyNow",
+            examples=["@aljazeeraenglish,@DemocracyNow"],
         ),
     ] = None,
     users: Annotated[
@@ -242,7 +242,7 @@ async def get_news_search(
         Query(
             title="Users to search in",
             description="A string of comma-separated X users to search in.",
-            examples="AJenglish,democracynow",
+            examples=["AJenglish,democracynow"],
         ),
     ] = None,
     period_days: Annotated[

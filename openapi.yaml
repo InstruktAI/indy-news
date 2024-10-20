@@ -163,7 +163,8 @@ paths:
           type: string
           minLength: 3
           title: Query string
-          examples: israel
+          examples:
+          - israel
         description: Query string used to match independent news channels and do a
           youtube search with in those channels.
       - name: channels
@@ -172,7 +173,8 @@ paths:
         schema:
           type: string
           title: Channels to search in
-          examples: '@aljazeeraenglish,@DemocracyNow'
+          examples:
+          - '@aljazeeraenglish,@DemocracyNow'
         description: A string of comma-separated Youtube channels to search in.
       - name: period_days
         in: query
@@ -265,7 +267,8 @@ paths:
           type: string
           minLength: 3
           title: Query string
-          examples: israel
+          examples:
+          - israel
         description: Query string used to match independent news users and do an X
           tweet search.
       - name: users
@@ -274,7 +277,8 @@ paths:
         schema:
           type: string
           title: Users to search in
-          examples: AJenglish,democracynow
+          examples:
+          - AJenglish,democracynow
         description: A string of comma-separated X users to search in.
       - name: period_days
         in: query
@@ -343,7 +347,8 @@ paths:
           type: string
           minLength: 3
           title: Query string
-          examples: israel
+          examples:
+          - israel
         description: Query string used to match independent news channels and do a
           youtube search with in those channels.
       - name: channels
@@ -352,7 +357,8 @@ paths:
         schema:
           type: string
           title: Channels to search in
-          examples: '@aljazeeraenglish,@DemocracyNow'
+          examples:
+          - '@aljazeeraenglish,@DemocracyNow'
         description: A string of comma-separated Youtube channels to search in.
       - name: users
         in: query
@@ -360,7 +366,8 @@ paths:
         schema:
           type: string
           title: Users to search in
-          examples: AJenglish,democracynow
+          examples:
+          - AJenglish,democracynow
         description: A string of comma-separated X users to search in.
       - name: period_days
         in: query
