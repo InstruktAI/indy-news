@@ -134,7 +134,7 @@ async def youtube_search(
     query: str = None,
     channels: str = None,
     period_days: int = 3,
-    since: str = None,
+    end_date: str = None,
     max_channels: int = 5,
     max_videos_per_channel: int = 3,
     get_descriptions: bool = False,
@@ -150,9 +150,9 @@ async def youtube_search(
         media = await query_media(query, top_k=max_channels * 2)
         channels_arr = [item["Youtube"] for item in media][:max_channels]
 
-    [year, month, day] = get_since_date(period_days, since)
+    [year, month, day] = get_since_date(period_days, end_date)
     query_str = f"{query} " if query else ""
-    before = f'{" " if query else ""}before:{since} ' if since else ""
+    before = f'{" " if query else ""}before:{end_date} ' if end_date else ""
     encoded_search = urllib.parse.quote_plus(
         f"{query_str}{before}after:{year}-{month}-{day}"
     )

@@ -11,7 +11,6 @@ from twikit import Tweet as TwikitTweet
 from twikit import User as TwikitUser
 
 from api.store import get_data, query_media
-from lib.cache import async_threadsafe_ttl_cache
 from lib.utils import get_since_date
 
 dotenv.load_dotenv()
@@ -57,11 +56,12 @@ def get_client() -> Client:
     return client
 
 
-@async_threadsafe_ttl_cache(ttl=180)
+# @async_threadsafe_ttl_cache(ttl=180)
 async def x_search(
     query: str = None,
     users: str = None,
     period_days: int = 3,
+    end_date: str = None,
     max_users: int = 20,
     max_tweets_per_user: int = 20,
 ) -> List[Tweet]:
@@ -75,14 +75,21 @@ async def x_search(
             if item["X"] != "n/a":
                 users_arr.append(f"from:{item['X']}")
 
-    query_str = f" {query}" if query else ""
-    users_str = "(" + " OR ".join(users_arr) + ")" if len(users_arr) > 0 else ""
-    [year, month, day] = get_since_date(period_days)
-    query = f"{users_str}{query_str} since:{year}-{month}-{day}"
+    query_str = f"{query} " if query else ""
+    [year, month, day] = get_since_date(period_days, end_date)
+    since = f"since:{year}-{month}-{day} "
+    until = f"until:{end_date}" if end_date else ""
+    users_str = " (" + " OR ".join(users_arr) + ")" if len(users_arr) > 0 else ""
+    search = f"{query_str}{since}{until}{users_str}"
     if len(users_arr) == 0:
         return []
     tweets: List[Tweet] = []
-    _tweets = await get_client().search_tweet(query=query, product="Latest", count=20)
+    _tweets = await get_client().search_tweet(
+        query=search,
+        product="Latest",
+        count=max_users * max_tweets_per_user,
+        # count=10,
+    )
     tweets.extend(_tweets)
     while (len(_tweets) == 20) and len(tweets) < max_users * max_tweets_per_user:
         _tweets = await _tweets.next()
