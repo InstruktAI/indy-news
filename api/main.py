@@ -2,7 +2,14 @@ from typing import Annotated, Dict, List
 
 from fastapi import Depends, FastAPI, HTTPException, Query
 
-from api.store import Media, query_allsides, query_media, query_mediabiasfactcheck
+from api.store import (
+    Media,
+    MediaMinimal,
+    get_data,
+    query_allsides,
+    query_media,
+    query_mediabiasfactcheck,
+)
 from api.x import Tweet, x_search
 from api.youtube import Video, VideoTranscript, youtube_search, youtube_transcripts
 from lib.auth import verify_apikey
@@ -44,6 +51,24 @@ async def search_media(
     """Search the curated independent media sources database for a partial name"""
     results = await query_media(query, top_k=limit + offset)
     return results[offset:]
+
+
+@app.get("/sources", response_model=List[MediaMinimal])
+async def get_all_sources(
+    _: None = Depends(verify_apikey),
+) -> List[MediaMinimal]:
+    """Returns a list of all sources' names, Youtube channel and X handles. Used as input for AI to determine which sources to select for certain topics."""
+    data = get_data()
+    sources = []
+    for _i, item in enumerate(data):
+        sources.append(
+            MediaMinimal(
+                Name=item["Name"],
+                Youtube=item["Youtube"],
+                X=item["X"],
+            )
+        )
+    return sources
 
 
 @app.get("/youtube", response_model=List[Video])
@@ -354,6 +379,12 @@ async def get_youtube_transcripts(
 @app.get("/privacy")
 async def read_privacy() -> str:
     return "You are ok"
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(app, host="0.0.0.0", port=8088)
 
 
 if __name__ == "__main__":

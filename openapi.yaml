@@ -146,6 +146,26 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /sources:
+    get:
+      summary: Get All Sources
+      description: Returns a list of all sources' names, Youtube channel and X handles.
+        Used as input for AI to determine which sources to select for certain topics.
+      operationId: get_all_sources_sources_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/MediaMinimal'
+                type: array
+                title: Response Get All Sources Sources Get
+      security:
+      - APIKeyQuery: []
+      - APIKeyHeader: []
+      - HTTPBearer: []
   /youtube:
     get:
       summary: Get Youtube Search
@@ -563,6 +583,24 @@ components:
       - Credibility
       title: Media
       description: Media model
+    MediaMinimal:
+      properties:
+        Name:
+          type: string
+          title: Name
+        Youtube:
+          type: string
+          title: Youtube
+        X:
+          type: string
+          title: X
+      type: object
+      required:
+      - Name
+      - Youtube
+      - X
+      title: MediaMinimal
+      description: Media minimal model
     Tweet:
       properties:
         id:

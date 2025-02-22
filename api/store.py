@@ -28,6 +28,16 @@ embed_model = OpenAIEmbedding(model_name="text-embedding-3-large", dimensions=d)
 Settings.embed_model = embed_model
 
 
+class MediaMinimal(BaseModel):
+    """Media minimal model"""
+
+    Name: str
+    Youtube: str
+    """Youtube channel"""
+    X: str
+    """X (formerly Twitter) handle"""
+
+
 class Media(BaseModel):
     """Media model"""
 
@@ -61,9 +71,9 @@ def _merge_facts(df: pd.DataFrame, facts: Dict[str, Dict[str, str]]) -> pd.DataF
     return df.apply(merge_fact, axis=1)
 
 
-def get_data() -> List[Dict[str, str]]:
+def get_data(force: bool = False) -> List[Dict[str, str]]:
     combined = "data/combined.json"
-    if os.path.exists(combined):
+    if not force and os.path.exists(combined):
         with open(combined, encoding="utf-8") as f:
             return json.load(f)
     else:
