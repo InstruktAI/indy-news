@@ -53,22 +53,45 @@ async def search_media(
     return results[offset:]
 
 
-@app.get("/sources", response_model=List[MediaMinimal])
+@app.get("/sources", response_model=List[str])
 async def get_all_sources(
     _: None = Depends(verify_apikey),
-) -> List[MediaMinimal]:
-    """Returns a list of all sources' names, Youtube channel and X handles. Used as input for AI to determine which sources to select for certain topics."""
+) -> List[str]:
+    """Returns a list of all sources' names. Used as input for AI to determine which sources to select for certain topics (it knows these names and what topics those sources report on)."""
     data = get_data()
-    sources = []
+    sources: List[str] = []
     for _i, item in enumerate(data):
-        sources.append(
+        sources.append(item["Name"])
+    return sources
+
+
+@app.get("/source-media", response_model=List[MediaMinimal])
+async def get_source_media(
+    sources: Annotated[
+        str,
+        Query(
+            title="Comma separated list of source names",
+            description="Comma separated list of source names to get Youtube channel and X handles for",
+            min_length=1,
+            examples=["Al Jazeera,Democracy Now"],
+        ),
+    ] = None,
+    _: None = Depends(verify_apikey),
+) -> List[MediaMinimal]:
+    """Returns a list of sources' Youtube channel and X handles. Used as input for AI to query for videos and tweets."""
+    data = get_data()
+    selected_sources: List[MediaMinimal] = []
+    for _i, item in enumerate(data):
+        if sources and item["Name"] not in sources:
+            continue
+        selected_sources.append(
             MediaMinimal(
                 Name=item["Name"],
                 Youtube=item["Youtube"],
                 X=item["X"],
             )
         )
-    return sources
+    return selected_sources
 
 
 @app.get("/youtube", response_model=List[Video])
