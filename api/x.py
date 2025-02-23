@@ -78,6 +78,8 @@ async def x_search(
     max_users: int = 20,
     max_tweets_per_user: int = 20,
 ) -> List[Tweet]:
+    if not users and not query:
+        return []
     if users:
         users_arr = _fix_users([f"from:{user}" for user in users.lower().split(",")])
 

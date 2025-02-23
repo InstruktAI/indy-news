@@ -141,6 +141,8 @@ async def youtube_search(
     get_transcripts: bool = True,
     char_cap: int = None,
 ) -> List[Video]:
+    if not channels and not query:
+        return []
     if channels:
         channels_arr = _fix_channels(
             ["@" + channel.replace("@", "") for channel in channels.lower().split(",")]
