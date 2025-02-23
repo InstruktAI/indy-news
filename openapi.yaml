@@ -149,8 +149,9 @@ paths:
   /sources:
     get:
       summary: Get All Sources
-      description: Returns a list of all sources' names, Youtube channel and X handles.
-        Used as input for AI to determine which sources to select for certain topics.
+      description: Returns a list of all sources' names. Used as input for AI to determine
+        which sources to select for certain topics (it knows these names and what
+        topics those sources report on).
       operationId: get_all_sources_sources_get
       responses:
         '200':
@@ -159,13 +160,51 @@ paths:
             application/json:
               schema:
                 items:
-                  $ref: '#/components/schemas/MediaMinimal'
+                  type: string
                 type: array
                 title: Response Get All Sources Sources Get
       security:
       - APIKeyQuery: []
       - APIKeyHeader: []
       - HTTPBearer: []
+  /source-media:
+    get:
+      summary: Get Source Media
+      description: Returns a list of sources' Youtube channel and X handles. Used
+        as input for AI to query for videos and tweets.
+      operationId: get_source_media_source_media_get
+      security:
+      - APIKeyQuery: []
+      - APIKeyHeader: []
+      - HTTPBearer: []
+      parameters:
+      - name: sources
+        in: query
+        required: false
+        schema:
+          type: string
+          minLength: 1
+          title: Comma separated list of source names
+          examples:
+          - Al Jazeera,Democracy Now
+        description: Comma separated list of source names to get Youtube channel and
+          X handles for
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MediaMinimal'
+                title: Response Get Source Media Source Media Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /youtube:
     get:
       summary: Get Youtube Search
@@ -606,10 +645,6 @@ components:
         id:
           type: integer
           title: Id
-        created_at_datetime:
-          type: string
-          format: date-time
-          title: Created At Datetime
         text:
           type: string
           title: Text

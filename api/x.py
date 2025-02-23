@@ -1,6 +1,5 @@
 import asyncio
 import os
-from datetime import datetime
 from http.cookies import SimpleCookie
 from typing import Dict, List
 
@@ -19,8 +18,10 @@ dotenv.load_dotenv()
 # client = GuestClient()
 client = Client(
     "en-US",
-    user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
+    user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36",
 )
+
+cookies_file: str = os.path.join(os.getenv("CACHE") or "", "cookies.json")
 
 
 class User(BaseModel, TwikitUser):
@@ -33,8 +34,6 @@ class User(BaseModel, TwikitUser):
 class Tweet(BaseModel, TwikitTweet):
     # The unique identifier of the tweet.
     id: int
-    # The created_at converted to datetime.
-    created_at_datetime: datetime
     # The full text of the tweet.
     text: str
     # The language of the tweet.
@@ -45,15 +44,28 @@ class Tweet(BaseModel, TwikitTweet):
     user: User
 
 
-def get_client() -> Client:
+async def get_client() -> Client:
     # if exists, load cookies from file
     if client._user_id is not None:
         return client
-    cookies_raw = os.getenv("X_COOKIES")
-    cookie = SimpleCookie()
-    cookie.load(cookies_raw)
-    cookies = {k: v.value for k, v in cookie.items()}
-    client.set_cookies(cookies)
+    if os.getenv("X_COOKIES"):
+        cookies_raw = os.getenv("X_COOKIES")
+        cookie = SimpleCookie()
+        cookie.load(cookies_raw)
+        cookies = {k: v.value for k, v in cookie.items()}
+        client.set_cookies(cookies)
+        return client
+    if os.path.exists(cookies_file):
+        client.load_cookies(cookies_file)
+        return client
+    # otherwise, login
+    await client.login(
+        auth_info_1=os.getenv("X_USER"),
+        auth_info_2=os.getenv("X_EMAIL"),
+        password=os.getenv("X_PASSWORD"),
+    )
+    # and save cookies to file
+    client.save_cookies(cookies_file)
     return client
 
 
@@ -85,7 +97,8 @@ async def x_search(
     if len(users_arr) == 0:
         return []
     tweets: List[Tweet] = []
-    _tweets = await get_client().search_tweet(
+    client = await get_client()
+    _tweets = await client.search_tweet(
         query=search,
         product="Latest",
         count=max_users * max_tweets_per_user,
