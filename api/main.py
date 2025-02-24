@@ -372,7 +372,8 @@ async def get_news_search(
         max_users=max_users,
         max_tweets_per_user=max_tweets_per_user,
     )
-    char_cap -= len((",").join([f"{tweet}" for tweet in tweets]))
+    if tweets and char_cap is not None:
+        char_cap -= len((",").join([f"{tweet}" for tweet in tweets]))
     videos = await youtube_search(
         channels=channels,
         query=query,
