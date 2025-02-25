@@ -57,12 +57,14 @@ def _parse_html_list(html: str, max_results: int) -> List[Video]:
     end = html.index("};", start) + 1
     json_str = html[start:end]
     data = json.loads(json_str)
+    if not "twoColumnBrowseResultsRenderer" in data["contents"]:
+        return []
     tab = None
     for tab in data["contents"]["twoColumnBrowseResultsRenderer"]["tabs"]:
         if "expandableTabRenderer" in tab.keys():
             break
     if tab is None:
-        return results
+        return []
     for contents in tab["expandableTabRenderer"]["content"]["sectionListRenderer"][
         "contents"
     ]:
