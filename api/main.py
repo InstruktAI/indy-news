@@ -94,8 +94,8 @@ async def get_source_media(
         selected_sources.append(
             SourceMedia(
                 Name=item["Name"],
-                Youtube=item["Youtube"],
-                X=item["X"],
+                Youtube=item["Youtube"] if item["Youtube"] != "n/a" else None,
+                X=item["X"] if item["X"] != "n/a" else None,
             )
         )
     return selected_sources
