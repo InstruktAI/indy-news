@@ -28,8 +28,8 @@ embed_model = OpenAIEmbedding(model_name="text-embedding-3-large", dimensions=d)
 Settings.embed_model = embed_model
 
 
-class MediaMinimal(BaseModel):
-    """Media minimal model"""
+class SourceMedia(BaseModel):
+    """Source minimal model"""
 
     Name: str
     Youtube: str
@@ -38,7 +38,7 @@ class MediaMinimal(BaseModel):
     """X (formerly Twitter) handle"""
 
 
-class Media(BaseModel):
+class Source(BaseModel):
     """Media model"""
 
     Name: str
@@ -53,6 +53,14 @@ class Media(BaseModel):
     Profile: Union[str, None]
     Factual: Union[str, None]
     Credibility: Union[str, None]
+
+
+class SourceMinimal(BaseModel):
+    """Source model"""
+
+    Name: str
+    About: str
+    Topics: str
 
 
 def _merge_facts(df: pd.DataFrame, facts: Dict[str, Dict[str, str]]) -> pd.DataFrame:
@@ -164,7 +172,7 @@ def _get_retriever(top_k: int) -> HybridRetriever:
 #     return reranked_nodes
 
 
-def _extract_node_data(nodes: list[NodeWithScore]) -> list[Media]:
+def _extract_node_data(nodes: list[NodeWithScore]) -> list[Source]:
     """
     We need to map the nodes back to the original json data.
     """
@@ -177,7 +185,7 @@ def _extract_node_data(nodes: list[NodeWithScore]) -> list[Media]:
 
 
 @cache(ttl=60 * 60 * 24)
-async def query_media(query: str, top_k: int = 5) -> list[Media]:
+async def query_media(query: str, top_k: int = 5) -> list[Source]:
     retriever = _get_retriever(top_k)
     raw_nodes = await retriever.aretrieve(query)
     # reranked_nodes = _get_reranked_nodes(raw_nodes, query, top_k)

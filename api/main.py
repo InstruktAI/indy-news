@@ -3,8 +3,9 @@ from typing import Annotated, Dict, List
 from fastapi import Depends, FastAPI, HTTPException, Query
 
 from api.store import (
-    Media,
-    MediaMinimal,
+    Source,
+    SourceMedia,
+    SourceMinimal,
     get_data,
     query_allsides,
     query_media,
@@ -41,31 +42,37 @@ def search_mediabiasfactcheck(
     return results[offset:]
 
 
-@app.get("/media", response_model=List[Media])
+@app.get("/media", response_model=List[Source])
 async def search_media(
     query: str,
     limit: int = 5,
     offset: int = 0,
     _: None = Depends(verify_apikey),
-) -> List[Media]:
+) -> List[Source]:
     """Search the curated independent media sources database for a partial name"""
     results = await query_media(query, top_k=limit + offset)
     return results[offset:]
 
 
-@app.get("/sources", response_model=List[str])
+@app.get("/sources", response_model=List[SourceMinimal])
 async def get_all_sources(
     _: None = Depends(verify_apikey),
-) -> List[str]:
+) -> List[SourceMinimal]:
     """Returns a list of all sources' names. Used as input for AI to determine which sources to select for certain topics (it knows these names and what topics those sources report on)."""
     data = get_data()
-    sources: List[str] = []
+    sources: List[SourceMinimal] = []
     for _i, item in enumerate(data):
-        sources.append(item["Name"])
+        sources.append(
+            SourceMinimal(
+                Name=item["Name"],
+                About=item["About"],
+                Topics=item["Topics"],
+            )
+        )
     return sources
 
 
-@app.get("/source-media", response_model=List[MediaMinimal])
+@app.get("/source-media", response_model=List[SourceMedia])
 async def get_source_media(
     sources: Annotated[
         str,
@@ -77,15 +84,15 @@ async def get_source_media(
         ),
     ] = None,
     _: None = Depends(verify_apikey),
-) -> List[MediaMinimal]:
+) -> List[SourceMedia]:
     """Returns a list of sources' Youtube channel and X handles. Used as input for AI to query for videos and tweets."""
     data = get_data()
-    selected_sources: List[MediaMinimal] = []
+    selected_sources: List[SourceMedia] = []
     for _i, item in enumerate(data):
         if sources and item["Name"] not in sources:
             continue
         selected_sources.append(
-            MediaMinimal(
+            SourceMedia(
                 Name=item["Name"],
                 Youtube=item["Youtube"],
                 X=item["X"],
@@ -299,7 +306,7 @@ async def get_news_search(
             title="Period in days",
             description="The period in days before (now|end_date) that we want to search videos for.",
         ),
-    ] = 3,
+    ] = 7,
     end_date: Annotated[
         str,
         Query(
@@ -403,6 +410,12 @@ async def get_youtube_transcripts(
 @app.get("/privacy")
 async def read_privacy() -> str:
     return "You are ok"
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(app, host="0.0.0.0", port=8088)
 
 
 if __name__ == "__main__":
