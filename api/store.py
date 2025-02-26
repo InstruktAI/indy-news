@@ -3,18 +3,11 @@ import os
 from typing import Dict, List, Union
 
 import pandas as pd
-from llama_index.core import Settings
-from llama_index.embeddings.openai import OpenAIEmbedding
 from pydantic import BaseModel
 
 allsides_file = "./data/allsides.com.json"
 mbfc_file = "./data/mediabiasfactcheck.com.json"
 csv_file = "./data/all.csv"
-persist_dir = "./db"
-
-d = 3072
-embed_model = OpenAIEmbedding(model_name="text-embedding-3-large", dimensions=d)
-Settings.embed_model = embed_model
 
 
 class SourceMedia(BaseModel):
