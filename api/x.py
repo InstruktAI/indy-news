@@ -71,10 +71,10 @@ async def get_client() -> Client:
 
 @async_threadsafe_ttl_cache(ttl=180)
 async def x_search(
+    users: str,
+    end_date: str,
     query: str = None,
-    users: str = None,
     period_days: int = 3,
-    end_date: str = None,
     max_users: int = 20,
     max_tweets_per_user: int = 20,
 ) -> List[Tweet]:
