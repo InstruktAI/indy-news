@@ -19,8 +19,11 @@
   "prettier.enable": true,
   "python.analysis.autoImportCompletions": true,
   "python.analysis.enableSyncServer": false,
-  "python.analysis.include": [ "api", "lib", "pages" ],
-  "python.defaultInterpreterPath": ".venv/bin/python",
+  "python.analysis.include": [
+    "api",
+    "lib",
+    "pages"
+  ],
   "python.terminal.activateEnvInCurrentTerminal": true,
   "python.testing.unittestArgs": [ "-v", "-s", ".", "-p", "*_test.py" ],
   "python.testing.unittestEnabled": true

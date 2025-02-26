@@ -1,4 +1,6 @@
+aiohttp
 dateparser
+dotenv
 fastapi
 munch
 pyyaml

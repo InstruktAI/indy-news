@@ -1,4 +1,6 @@
+aiohttp==3.11.13
 dateparser==1.2.1
+dotenv==0.9.9
 fastapi==0.115.8
 munch==4.0.0
 PyYAML==6.0.2
