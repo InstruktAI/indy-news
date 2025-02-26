@@ -9,7 +9,7 @@ from twikit import Client
 from twikit import Tweet as TwikitTweet
 from twikit import User as TwikitUser
 
-from api.store import get_data, query_media
+from api.store import get_data
 from lib.cache import async_threadsafe_ttl_cache
 from lib.utils import get_since_date
 
@@ -80,16 +80,7 @@ async def x_search(
 ) -> List[Tweet]:
     if not users and not query:
         return []
-    if users:
-        users_arr = _fix_users([f"from:{user}" for user in users.lower().split(",")])
-
-    else:
-        media = await query_media(query, top_k=max_users * 2)
-        users_arr = []
-        for item in media[:max_users]:
-            if item["X"] != "n/a":
-                users_arr.append(f"from:{item['X']}")
-
+    users_arr = _fix_users([f"from:{user}" for user in users.lower().split(",")])
     query_str = f"{query} " if query else ""
     [year, month, day] = get_since_date(period_days, end_date)
     since = f"since:{year}-{month}-{day} "

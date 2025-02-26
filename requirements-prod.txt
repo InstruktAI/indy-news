@@ -1,16 +1,8 @@
 dateparser
-faiss-cpu
 fastapi
-llama_index
-llama-index-llms-openai
-llama-index-retrievers-bm25
-llama-index-vector-stores-faiss
 munch
 pyyaml
-rank-bm25
-selenium
 streamlit
 twikit
 uvicorn
-webdriver-manager
 youtube-transcript-api

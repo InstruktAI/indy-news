@@ -8,7 +8,6 @@ from api.store import (
     SourceMinimal,
     get_data,
     query_allsides,
-    query_media,
     query_mediabiasfactcheck,
 )
 from api.x import Tweet, x_search
@@ -50,8 +49,9 @@ async def search_media(
     _: None = Depends(verify_apikey),
 ) -> List[Source]:
     """Search the curated independent media sources database for a partial name"""
-    results = await query_media(query, top_k=limit + offset)
-    return results[offset:]
+    data = get_data()
+    results = [Source(item) for item in data if query.lower() in item["Name"].lower()]
+    return results[offset : offset + limit]
 
 
 @app.get("/sources", response_model=List[SourceMinimal])
@@ -352,12 +352,12 @@ async def get_news_search(
     _: None = Depends(verify_apikey),
 ) -> List[Video | Tweet]:
     """
-    Find both Youtube videos and X tweets by either providing channels, users, a query.
+    Find both Youtube videos and X tweets by either providing channels or users, and potentially a query.
     """
     if not (channels or users or query):
         raise HTTPException(
             status_code=400,
-            detail='Either one of "query" or "channels" must be provided!',
+            detail='Either one of "channels" or "users" must be provided!',
         )
     if not channels:
         if not max_channels:
@@ -371,26 +371,34 @@ async def get_news_search(
                 status_code=400,
                 detail='"max_users" must be provided when no "users" are set!',
             )
-    tweets = await x_search(
-        query=query,
-        users=users,
-        period_days=period_days,
-        end_date=end_date,
-        max_users=max_users,
-        max_tweets_per_user=max_tweets_per_user,
+    tweets = (
+        await x_search(
+            query=query,
+            users=users,
+            period_days=period_days,
+            end_date=end_date,
+            max_users=max_users,
+            max_tweets_per_user=max_tweets_per_user,
+        )
+        if (users)
+        else []
     )
     if tweets and char_cap is not None:
         char_cap -= len((",").join([f"{tweet}" for tweet in tweets]))
-    videos = await youtube_search(
-        channels=channels,
-        query=query,
-        period_days=period_days,
-        end_date=end_date,
-        max_channels=max_channels,
-        max_videos_per_channel=max_videos_per_channel,
-        get_descriptions=False,
-        get_transcripts=True,
-        char_cap=char_cap,
+    videos = (
+        await youtube_search(
+            channels=channels,
+            query=query,
+            period_days=period_days,
+            end_date=end_date,
+            max_channels=max_channels,
+            max_videos_per_channel=max_videos_per_channel,
+            get_descriptions=False,
+            get_transcripts=False,
+            char_cap=char_cap,
+        )
+        if (channels)
+        else []
     )
 
     return tweets + videos

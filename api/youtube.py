@@ -12,7 +12,7 @@ from munch import munchify
 from pydantic import BaseModel
 from youtube_transcript_api import YouTubeTranscriptApi
 
-from api.store import get_data, query_media
+from api.store import get_data
 from lib.cache import async_threadsafe_ttl_cache
 from lib.cache import sync_threadsafe_ttl_cache as cache
 from lib.utils import get_since_date
@@ -143,15 +143,9 @@ async def youtube_search(
     get_transcripts: bool = True,
     char_cap: int = None,
 ) -> List[Video]:
-    if channels:
-        channels_arr = _fix_channels(
-            ["@" + channel.replace("@", "") for channel in channels.lower().split(",")]
-        )
-
-    else:
-        media = await query_media(query, top_k=max_channels * 2)
-        channels_arr = [item["Youtube"] for item in media][:max_channels]
-
+    channels_arr = _fix_channels(
+        ["@" + channel.replace("@", "") for channel in channels.lower().split(",")]
+    )
     [year, month, day] = get_since_date(period_days, end_date)
     query_str = f"{query} " if query else ""
     before = f'{" " if query else ""}before:{end_date} ' if end_date else ""
