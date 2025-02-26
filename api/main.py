@@ -58,7 +58,7 @@ async def search_media(
 async def get_all_sources(
     _: None = Depends(verify_apikey),
 ) -> List[SourceMinimal]:
-    """Returns a list of all sources' names. Used as input for AI to determine which sources to select for certain topics (it knows these names and what topics those sources report on)."""
+    """Returns a list of all sources. Used as input for AI to determine which sources to select for certain topics (it knows these names and what topics those sources report on)."""
     data = get_data()
     sources: List[SourceMinimal] = []
     for _i, item in enumerate(data):

@@ -32,9 +32,9 @@ class SourceMedia(BaseModel):
     """Source minimal model"""
 
     Name: str
-    Youtube: str
+    Youtube: Union[str, None]
     """Youtube channel"""
-    X: str
+    X: Union[str, None]
     """X (formerly Twitter) handle"""
 
 
