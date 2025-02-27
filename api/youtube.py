@@ -131,6 +131,7 @@ def _parse_html_video(html: str) -> Dict[str, str]:
     return result
 
 
+# cache results for one hour
 @async_threadsafe_ttl_cache(ttl=3600)
 async def youtube_search(
     channels: str,

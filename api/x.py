@@ -33,7 +33,7 @@ class User(BaseModel, TwikitUser):
 
 class Tweet(BaseModel, TwikitTweet):
     # The unique identifier of the tweet.
-    id: int
+    id: str
     # The full text of the tweet.
     text: str
     # The language of the tweet.
@@ -69,7 +69,8 @@ async def get_client() -> Client:
     return client
 
 
-@async_threadsafe_ttl_cache(ttl=180)
+# cache results for one hour
+@async_threadsafe_ttl_cache(ttl=3600)
 async def x_search(
     users: str,
     end_date: str,
@@ -87,6 +88,7 @@ async def x_search(
     until = f"until:{end_date}" if end_date else ""
     users_str = " (" + " OR ".join(users_arr) + ")" if len(users_arr) > 0 else ""
     search = f"{query_str}{since}{until}{users_str}"
+    count = len(users_arr) * max_tweets_per_user
     if len(users_arr) == 0:
         return []
     tweets: List[Tweet] = []
@@ -94,11 +96,11 @@ async def x_search(
     _tweets = await client.search_tweet(
         query=search,
         product="Latest",
-        count=max_users * max_tweets_per_user,
+        count=count,
         # count=10,
     )
     tweets.extend(_tweets)
-    while (len(_tweets) == 20) and len(tweets) < max_users * max_tweets_per_user:
+    while (len(_tweets) == 20) and len(tweets) < count:
         _tweets = await _tweets.next()
         tweets.extend(_tweets)
         await asyncio.sleep(1)
