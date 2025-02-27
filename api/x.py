@@ -76,7 +76,6 @@ async def x_search(
     end_date: str,
     query: str = None,
     period_days: int = 3,
-    max_users: int = 20,
     max_tweets_per_user: int = 20,
 ) -> List[Tweet]:
     if not users and not query:

@@ -314,20 +314,6 @@ async def get_news_search(
             description="The end day in Y-m-d format. Subtracts the period_days to determine the period that we want to search videos for.",
         ),
     ] = None,
-    max_channels: Annotated[
-        int,
-        Query(
-            title="Max channels",
-            description="Maximum number of channels that we want to match. Needed when no channels were provided.",
-        ),
-    ] = 5,
-    max_users: Annotated[
-        int,
-        Query(
-            title="Max users",
-            description="Maximum number of users that we want to match. Needed when no users were provided.",
-        ),
-    ] = 20,
     max_videos_per_channel: Annotated[
         int,
         Query(
@@ -354,30 +340,17 @@ async def get_news_search(
     """
     Find both Youtube videos and X tweets by either providing channels or users, and potentially a query.
     """
-    if not (channels or users or query):
+    if not (channels or users):
         raise HTTPException(
             status_code=400,
             detail='Either one of "channels" or "users" must be provided!',
         )
-    if not channels:
-        if not max_channels:
-            raise HTTPException(
-                status_code=400,
-                detail='"max_channels" must be provided when no "channels" are set!',
-            )
-    if not users:
-        if not max_users:
-            raise HTTPException(
-                status_code=400,
-                detail='"max_users" must be provided when no "users" are set!',
-            )
     tweets = (
         await x_search(
             query=query,
             users=users,
             period_days=period_days,
             end_date=end_date,
-            max_users=max_users,
             max_tweets_per_user=max_tweets_per_user,
         )
         if (users)
@@ -391,7 +364,6 @@ async def get_news_search(
             query=query,
             period_days=period_days,
             end_date=end_date,
-            max_channels=max_channels,
             max_videos_per_channel=max_videos_per_channel,
             get_descriptions=False,
             get_transcripts=False,
