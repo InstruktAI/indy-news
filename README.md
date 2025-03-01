@@ -24,7 +24,6 @@ It also contains some endpoints to see where the ratings come from:
 - all.csv: our source selection of media outlets
 - allsides.com.json: snapshot of the AllSides db
 - mediabiasfactcheck.com.json: snapshot of the [MediaBiasFactCheck db](https://mediabiasfactcheck.com)
-- conbined.json: enriched with entries from mediabiasfactcheck.com data (if found).
 
 ### Dev instructions
 
