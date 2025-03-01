@@ -136,12 +136,12 @@ def _parse_html_video(html: str) -> Dict[str, str]:
 async def youtube_search(
     channels: str,
     end_date: str,
-    query: str = None,
+    query: Optional[str] = None,
     period_days: int = 3,
     max_videos_per_channel: int = 3,
     get_descriptions: bool = False,
     get_transcripts: bool = True,
-    char_cap: int = None,
+    char_cap: Optional[int] = None,
 ) -> List[Video]:
     channels_arr = _fix_channels(
         ["@" + channel.replace("@", "") for channel in channels.lower().split(",")]

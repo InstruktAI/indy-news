@@ -1,7 +1,7 @@
 import asyncio
 import os
 from http.cookies import SimpleCookie
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import dotenv
 from pydantic import BaseModel
@@ -74,7 +74,7 @@ async def get_client() -> Client:
 async def x_search(
     users: str,
     end_date: str,
-    query: str = None,
+    query: Optional[str] = None,
     period_days: int = 3,
     max_tweets_per_user: int = 20,
 ) -> List[Tweet]:
