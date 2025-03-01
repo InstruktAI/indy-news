@@ -1,41 +1,36 @@
 # Indy News
 
-Try it on [Streamlit](https://indy-news.streamlit.app/)!
+The API used by the [Indy News assistant](https://indy-news.instrukt.ai).
 
-## Search for relevant independent media outlets or videos covering a topic
+It uses [a selection of trusted news sources](https://github.com/Morriz/indy-news/blob/main/data/all.csv) to retrieve their publications for a time window and a potential topic of interest.
 
-Contains both a streamlit app and a FastAPI module. The app uses the following _SMART_ api endpoints:
+## Search for relevant independent media outlets
 
-- [/media](http://127.0.0.1:8000/media?query=israel)
-- [/youtube](http://127.0.0.1:8000/youtube?query=israel)
+- [/media](http://127.0.0.1:8000/media?names=The%20Grayzone,Al%20Jazeera,Democracy%20Now)
 
-When I say smart I mean that the search tech used is:
+## Search for relevant youtube videos
 
-- vector db
-- hybrid bm25 + vector retriever
+- [/youtube](http://127.0.0.1:8000/youtube?channels=@thegrayzone7996,@aljazeeraenglish,@DemocracyNow&query=israel&end_date=2025-12-12&period_days=90)
 
-It also contains some dumb endpoints that only match input against the "name" property:
+## Check the ratings DBs we used
+
+It also contains some endpoints to see where the ratings come from:
 
 - [/allsides](http://127.0.0.1:8000/allsides?query=israel)
 - [/mediabiasfactcheck](http://127.0.0.1:8000/mediabiasfactcheck?query=israel)
 
 ### Databases used (see `data/` folder)
 
-- all.csv: 80+ media outlets enriched with entries from [mediabiasfactcheck.com](https://mediabiasfactcheck.com) data (if found).
+- all.csv: our source selection of media outlets
 - allsides.com.json: snapshot of the AllSides db
-- mediabiasfactcheck.com.json: snapshot of the MediaBiasFactCheck db
-
-### Original sources used
-
-The following got normalized and ended up in all.csv:
-
-- [libguides.rowan.edu](https://libguides.rowan.edu)
-- [localfutures.org](https://localfutures.org)
-- [trustworthymedia.org](https://trustworthymedia.org)
-- some individuals and teams that I esteem and follow myself ;)
+- mediabiasfactcheck.com.json: snapshot of the [MediaBiasFactCheck db](https://mediabiasfactcheck.com)
+- conbined.json: enriched with entries from mediabiasfactcheck.com data (if found).
 
 ### Dev instructions
 
-Run streamlit locally: `.venv/bin/streamlit run Home.py`
+1. Install and activate `.venv` and `pip install -r requirements.txt`
 
-Run api locally: `.venv/bin/uvicorn --host "0.0.0.0" -p 8088`
+2. Run
+
+- FastAPI: `.venv/bin/uvicorn --host "0.0.0.0" -p 8088`
+- StreamLit `.venv/bin/streamlit run Home.py`
