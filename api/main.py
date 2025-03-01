@@ -42,20 +42,22 @@ def search_mediabiasfactcheck(
 
 
 @app.get("/media", response_model=List[Source])
-async def search_media(
-    query: str,
-    limit: int = 5,
-    offset: int = 0,
+def search_media(
+    names: str,
     _: None = Depends(verify_apikey),
 ) -> List[Source]:
     """Search the curated independent media sources database for a partial name"""
     data = get_data()
-    results = [Source(item) for item in data if query.lower() in item["Name"].lower()]
-    return results[offset : offset + limit]
+    results = []
+    for name in names.split(","):
+        for item in data:
+            if name == item["Name"]:
+                results.append(Source(**item))
+    return results
 
 
 @app.get("/sources", response_model=List[SourceMinimal])
-async def get_all_sources(
+def get_all_sources(
     _: None = Depends(verify_apikey),
 ) -> List[SourceMinimal]:
     """Returns a list of all sources. Used as input for AI to determine which sources to select for certain topics (it knows these names and what topics those sources report on)."""
@@ -73,7 +75,7 @@ async def get_all_sources(
 
 
 @app.get("/source-media", response_model=List[SourceMedia])
-async def get_source_media(
+def get_source_media(
     sources: Annotated[
         str,
         Query(
@@ -99,6 +101,43 @@ async def get_source_media(
             )
         )
     return selected_sources
+
+
+def get_column_values(
+    name: Annotated[
+        str,
+        Query(
+            title="Name of column",
+            min_length=3,
+            examples=["Youtube"],
+        ),
+    ] = None,
+    _: None = Depends(verify_apikey),
+) -> List[str]:
+    """Returns a list of sources' Youtube channel and X handles. Used as input for AI to query for videos and tweets."""
+    data = get_data()
+    values = []
+    for _i, item in enumerate(data):
+        for key, value in item.items():
+            if key.lower() == name.lower():
+                values.append(value)
+    return values
+
+
+@app.get("/source-names", response_model=List[str])
+def get_source_names(
+    _: None = Depends(verify_apikey),
+) -> List[str]:
+    """Returns a list of source names."""
+    return get_column_values("Name")
+
+
+@app.get("/youtube-channels", response_model=List[str])
+def get_youtube_channels(
+    _: None = Depends(verify_apikey),
+) -> List[str]:
+    """Returns a list of sources' Youtube channels."""
+    return get_column_values("Youtube")
 
 
 @app.get("/youtube", response_model=List[Video])

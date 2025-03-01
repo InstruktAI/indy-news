@@ -3,6 +3,7 @@ import asyncio
 import streamlit as st
 import streamlit.components.v1 as components
 
+from api.main import get_youtube_channels
 from api.youtube import youtube_search
 
 with open("index.html", "r") as f:
@@ -13,30 +14,20 @@ st.sidebar.title("Indy News Search")
 st.title("Youtube overview by topic")
 st.markdown(
     """
-## Get an overview of youtube videos that indy media are publishing on a topic.
-Will query youtube channels for videos from either:
-- channels provided: ("Query" then becomes optional: returns the latest channel videos if empty)
-- curated channels (channels found in the db matching "Query")
+## Get an overview of youtube videos that indy media are publishing (potentially on a topic).
 (Results are cached one hour.)
 """
 )
 query = st.text_input(
-    "Query (leave empty to get latest)...",
+    "Topic (leave empty to get latest)...",
     placeholder="israel",
     max_chars=255,
     value=(st.query_params.query if "query" in st.query_params else ""),
 )
-channels = st.text_input(
-    "Optionally provide channels to search in...",
-    max_chars=255,
-    placeholder="aljazeeraenglish,DemocracyNow",
-    value=(st.query_params.channels if "channels" in st.query_params else ""),
-)
-max_channels = st.slider(
-    "Or select max number of channels",
-    1,
-    25,
-    st.query_params.max_channels if "max_channels" in st.query_params else 12,
+channels = st.multiselect(
+    "Provide one or more channels to search in...",
+    get_youtube_channels(),
+    default=["@thegrayzone7996", "@aljazeeraenglish", "@DemocracyNow"],
 )
 
 max_videos_per_channel = st.slider(
@@ -49,9 +40,13 @@ max_videos_per_channel = st.slider(
         else 2
     ),
 )
+end_date = st.date_input(
+    "End date (defaults to today)",
+    value="today",
+)
 period_days = int(
     st.text_input(
-        "Period (days since now)",
+        "Period (days up till end_date)",
         st.query_params.period_days if "period_days" in st.query_params else 3,
     )
 )
@@ -73,17 +68,17 @@ if not show_as_videos:
         ),
     )
 
-if query == "" and channels == "":
-    st.warning("Select at least either query or channels.")
+if not channels or channels == "":
+    st.warning("Select at least one or more channels and potentially a query")
     st.stop()
 
 
 async def get_youtube_results() -> None:
     results = await youtube_search(
         query=query,
-        channels=channels,
+        channels=",".join(channels),
         period_days=period_days,
-        max_channels=max_channels,
+        end_date=end_date.strftime("%Y-%m-%d"),
         max_videos_per_channel=max_videos_per_channel,
         get_transcripts=get_transcripts,
     )

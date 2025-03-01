@@ -11,7 +11,7 @@ st.sidebar.title("Indy News Search")
 st.title("Search MediaBiasFactCheck DB")
 st.markdown(
     """
-## Search for media outlets by partial name
+## Search for ALL media outlets by partial name. (Only a small selection is used in Media!)
 Uses a snapshot of the MediaBiasFactCheck DB (5714 records) and checks wether input is found in the *NAME* only.
 (Only records with a confidence score of "medium" or "high" are included.)
 """
