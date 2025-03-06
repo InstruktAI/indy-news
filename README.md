@@ -10,7 +10,17 @@ It uses [a selection of trusted news sources](https://github.com/Morriz/indy-new
 
 ## Search for relevant youtube videos
 
-- [/youtube](http://127.0.0.1:8000/youtube?channels=@thegrayzone7996,@aljazeeraenglish,@DemocracyNow&query=israel&end_date=2025-12-12&period_days=90)
+- [/youtube](http://127.0.0.1:8000/youtube?channels=@thegrayzone7996,@aljazeeraenglish,@DemocracyNow&query=israel&end_date=2025-02-06&period_days=90)
+
+## Search for relevant X tweets
+
+- [/x](http://127.0.0.1:8000/x?users=TheGrayzoneNews,AJEnglish,democracynow&query=israel&end_date=2025-02-06&period_days=90)
+
+Prerequisites: Please first log in to X and log your cookies an place them in `.env` under `X_COOKIE`. It should look like this:
+
+```
+X_COOKIES='  lang=en; guest_id=123; night_mode=2; _twitter_sess=ABC--DEF; d_prefs=GJHHJVS; guest_id_ads=v1%3A1223423434; guest_id_marketing=v1%3A23423423423; personalization_id="v1_dasdiuhjKIvhhb=="; kdt=KJBNDFSbfsdksLKSDFJSDF; auth_token=sfsefsdfs234n2bn34j23kj4n2k; ct0=jsdfkdnksdndajsk21323kjn42kj; att=1kjfnaskNknlnlsfsaldkf; lang=en; twid=u%3D1342342342'
+```
 
 ## Check the ratings DBs we used
 
@@ -33,3 +43,7 @@ It also contains some endpoints to see where the ratings come from:
 
 - FastAPI: `.venv/bin/uvicorn --host "0.0.0.0" -p 8088`
 - StreamLit `.venv/bin/streamlit run Home.py`
+
+```
+
+```
