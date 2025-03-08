@@ -173,13 +173,6 @@ async def get_youtube_search(
             description="The end day in Y-m-d format. Subtracts the period_days to determine the period that we want to search videos for.",
         ),
     ] = None,
-    max_channels: Annotated[
-        int,
-        Query(
-            title="Max channels",
-            description="Maximum number of channels that we want to match. Needed when no channels were provided.",
-        ),
-    ] = 5,
     max_videos_per_channel: Annotated[
         int,
         Query(
@@ -218,18 +211,11 @@ async def get_youtube_search(
             status_code=400,
             detail='Either one of "query" or "channels" must be provided!',
         )
-    if not channels:
-        if not max_channels:
-            raise HTTPException(
-                status_code=400,
-                detail='"max_channels" must be provided when no "channels" are set!',
-            )
     results = await youtube_search(
         channels=channels,
         query=query,
         period_days=period_days,
         end_date=end_date,
-        max_channels=max_channels,
         max_videos_per_channel=max_videos_per_channel,
         get_descriptions=get_descriptions,
         get_transcripts=get_transcripts,
@@ -271,13 +257,6 @@ async def get_x_search(
             description="The end day in Y-m-d format. Subtracts the period_days to determine the period that we want to search videos for.",
         ),
     ] = None,
-    max_users: Annotated[
-        int,
-        Query(
-            title="Max users",
-            description="Maximum number of users that we want to match. Needed when no users were provided.",
-        ),
-    ] = 20,
     max_tweets_per_user: Annotated[
         int,
         Query(
@@ -295,18 +274,11 @@ async def get_x_search(
             status_code=400,
             detail='Either one of "query" or "users" must be provided!',
         )
-    if not users:
-        if not max_users:
-            raise HTTPException(
-                status_code=400,
-                detail='"max_users" must be provided when no "users" are set!',
-            )
     results = await x_search(
         query=query,
         users=users,
         period_days=period_days,
         end_date=end_date,
-        max_users=max_users,
         max_tweets_per_user=max_tweets_per_user,
     )
     return results

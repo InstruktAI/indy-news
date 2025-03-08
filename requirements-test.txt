@@ -1,9 +1,11 @@
 black
 mypy
+pandas
 pre-commit
 pylint
-pandas
 pyproject-fmt
+pytest
+pytest-asyncio
 types-cachetools
 types-PyYAML
 watchdog
