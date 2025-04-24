@@ -290,5 +290,5 @@ def _get_video_transcript(video_id: str, strip_timestamps: bool = False) -> str:
             ]
         )
         return transcript
-    except:
+    except Exception as e:
         return ""
