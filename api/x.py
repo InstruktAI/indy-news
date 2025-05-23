@@ -102,12 +102,12 @@ async def x_search(
         users_arr = [f"from:{user}" for user in _filter_users(users.lower().split(","))]
 
     # Build search query
-    query_str = f"{query} " if query else ""
+    query_str = f" {query}" if query else ""
     [year, month, day] = get_since_date(period_days, end_date)
     since = f"since:{year}-{month}-{day} "
     until = f"until:{end_date}" if end_date else ""
     users_str = " (" + " OR ".join(users_arr) + ")" if len(users_arr) > 0 else ""
-    search = f"{query_str}{since}{until}{users_str}".strip()
+    search = f"{since}{until}{users_str}{query_str}".strip()
 
     # Set tweet count based on number of users
     count = len(users_arr) * max_tweets_per_user if users_arr else max_tweets_per_user

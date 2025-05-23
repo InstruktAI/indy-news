@@ -16,4 +16,6 @@ WORKDIR /app
 COPY --from=base /app /app
 COPY . /app
 
+RUN [ -n "$X_JSON" ] && cat "$X_JSON" > ${CACHE}cookies.json || true
+
 CMD [".venv/bin/uvicorn", "api.main:app", "--port", "8080", "--host", "0.0.0.0"]
