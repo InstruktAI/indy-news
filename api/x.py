@@ -2,6 +2,7 @@ import asyncio
 import os
 from datetime import datetime
 from http.cookies import SimpleCookie
+from logging import debug, error, info
 from typing import Dict, List, Optional
 
 import dotenv
@@ -51,6 +52,7 @@ async def _get_client() -> Client:
     if client._user_id is not None:
         return client
     if os.getenv("X_COOKIES"):
+        info("Using cookies from environment variable X_COOKIES")
         cookies_raw = os.getenv("X_COOKIES")
         cookie = SimpleCookie()
         cookie.load(cookies_raw)
@@ -58,9 +60,11 @@ async def _get_client() -> Client:
         client.set_cookies(cookies)
         return client
     if os.path.exists(cookies_file):
+        info(f"Loading cookies from file: {cookies_file}")
         client.load_cookies(cookies_file)
         return client
     # otherwise, login
+    info("No cookies found, logging in with credentials")
     await client.login(
         auth_info_1=os.getenv("X_USER"),
         auth_info_2=os.getenv("X_EMAIL"),
@@ -96,6 +100,9 @@ async def x_search(
                 raise ValueError("end_date must be in YYYY-MM-DD format")
             raise e
 
+    debug(
+        f"Searching for tweets with users: {users}, query: {query}, period_days: {period_days}, end_date: {end_date}, max_tweets_per_user: {max_tweets_per_user}"
+    )
     # Process users if provided
     users_arr = []
     if users:
@@ -126,11 +133,18 @@ async def x_search(
             tweets.extend(_tweets)
             await asyncio.sleep(1)
         print("Number of tweets found: " + str(len(tweets)))
+        return _max_per_user(tweets, max_tweets_per_user)
     except Exception as e:
         if isinstance(e, HTTPException):
-            raise e
-        raise HTTPException(status_code=500, detail=f"Failed to fetch tweets: {str(e)}")
-    return _max_per_user(tweets, max_tweets_per_user)
+            # raise e
+            error(e)
+        else:
+            err = HTTPException(
+                status_code=500, detail=f"Failed to fetch tweets: {str(e)}"
+            )
+            # raise err
+            error(err)
+        return []
 
 
 def _max_per_user(tweets: List[Tweet], max_tweets_per_user: int = 10) -> List[Tweet]:

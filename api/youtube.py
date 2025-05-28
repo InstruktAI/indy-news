@@ -3,6 +3,7 @@ import json
 import time
 import urllib.parse
 from datetime import datetime
+from logging import error, info
 from typing import Dict, List, Optional, Union
 
 import dateparser
@@ -159,6 +160,10 @@ async def youtube_search(
     if len(channels_arr) == 0:
         return []
 
+    info(
+        f"Searching for videos on channels: {channels_arr}, query: {query}, period_days: {period_days}, end_date: {end_date}, max_videos_per_channel: {max_videos_per_channel}, get_descriptions: {get_descriptions}, get_transcripts: {get_transcripts}, char_cap: {char_cap}"
+    )
+
     for channel in channels_arr:
         if channel == "n/a":
             continue
@@ -175,8 +180,10 @@ async def youtube_search(
     try:
         results = await asyncio.gather(*tasks)
     except HTTPException as e:
+        error(e)
         raise e
     except Exception as e:
+        error(e)
         raise e
 
     res: List[Video] = []
@@ -215,6 +222,7 @@ def youtube_transcripts(
     """
     Extract transcripts from a list of Youtube video ids
     """
+
     results: List[VideoTranscript] = []
     for video_id in ids.split(","):
         transcript = _get_video_transcript(video_id, strip_timestamps=True)
