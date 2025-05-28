@@ -1,3 +1,5 @@
+import logging
+from os import getenv
 from typing import Annotated, Dict, List
 
 from fastapi import Depends, FastAPI, HTTPException, Query
@@ -13,6 +15,8 @@ from api.store import (
 from api.x import Tweet, x_search
 from api.youtube import Video, VideoTranscript, youtube_search, youtube_transcripts
 from lib.auth import verify_apikey
+
+logging.basicConfig(level=getenv("LOG_LEVEL", "INFO").upper())
 
 app = FastAPI()
 
