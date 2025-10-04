@@ -18,6 +18,8 @@ class SourceMedia(BaseModel):
     """Youtube channel"""
     X: Union[str, None]
     """X (formerly Twitter) handle"""
+    Substack: Union[str, None]
+    """Substack handle"""
 
 
 class Source(BaseModel):
@@ -31,6 +33,7 @@ class Source(BaseModel):
     Topics: str
     Wikipedia: str
     X: str
+    Substack: Union[str, None]
     Bias: Union[str, None]
     Profile: Union[str, None]
     Factual: Union[str, None]

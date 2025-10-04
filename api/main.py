@@ -103,6 +103,7 @@ def get_source_media(
                 Name=item["Name"],
                 Youtube=item["Youtube"] if item["Youtube"] != "n/a" else None,
                 X=item["X"] if item["X"] != "n/a" else None,
+                Substack=item["Substack"] if item["Substack"] != "n/a" else None,
             )
         )
     return selected_sources

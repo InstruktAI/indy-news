@@ -5,7 +5,7 @@ fastapi==0.118.0
 munch==4.0.0
 PyYAML==6.0.3
 streamlit==1.50.0
-twikit==2.3.3
 substack-api==1.1.1
+twikit==2.3.3
 uvicorn==0.37.0
 youtube-transcript-api==1.2.2

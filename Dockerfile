@@ -1,4 +1,4 @@
-FROM python:3.11 as base
+FROM python:3.12 as base
 WORKDIR /app
 COPY requirements.txt /app/
 RUN python -m venv .venv
@@ -11,7 +11,7 @@ FROM ci as test
 COPY . /app
 RUN bin/format.sh && bin/lint.sh && bin/test.sh
 
-FROM python:3.11-slim
+FROM python:3.12-slim
 WORKDIR /app
 COPY --from=base /app /app
 COPY . /app
