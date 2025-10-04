@@ -15,7 +15,6 @@ from youtube_transcript_api import YouTubeTranscriptApi
 
 from api.store import get_data
 from lib.cache import async_threadsafe_ttl_cache
-from lib.cache import sync_threadsafe_ttl_cache as cache
 from lib.utils import get_since_date
 
 logger = logging.getLogger(__name__)
@@ -217,7 +216,7 @@ def _sort_by_publish_time(video: Video) -> float:
     return time.mktime(d.timetuple())
 
 
-@cache(ttl=3600)
+# @cache(ttl=3600)
 def youtube_transcripts(
     ids: str,
 ) -> List[VideoTranscript]:
@@ -227,7 +226,7 @@ def youtube_transcripts(
 
     results: List[VideoTranscript] = []
     for video_id in ids.split(","):
-        transcript = _get_video_transcript(video_id, strip_timestamps=True)
+        transcript = _get_video_transcript(video_id)
         results.append(VideoTranscript(id=video_id, text=transcript))
     return results
 
@@ -285,18 +284,17 @@ async def _get_video_info(session: ClientSession, video_id: str) -> Dict[str, st
 
 
 def _get_video_transcript(video_id: str, strip_timestamps: bool = False) -> str:
+    ytt_api = YouTubeTranscriptApi()
     try:
-        transcripts = YouTubeTranscriptApi.get_transcript(
-            video_id, preserve_formatting=True
-        )
+        transcripts = ytt_api.fetch(video_id, preserve_formatting=True)
         transcript = " ".join(
             [
                 (
-                    str(t["start"]).split(".")[0] + "s" + ": " + t["text"]
+                    "[" + str(t["start"]).split(".")[0] + "s] " + t["text"]
                     if not strip_timestamps
                     else t["text"]
                 )
-                for t in transcripts
+                for t in transcripts.to_raw_data()
             ]
         )
         return transcript

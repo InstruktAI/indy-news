@@ -447,10 +447,10 @@ async def get_news_search(
 
 
 @app.get("/youtube-transcripts", response_model=List[VideoTranscript])
-async def get_youtube_transcripts(
+def get_youtube_transcripts(
     ids: str,
     _: None = Depends(verify_apikey),
-) -> Dict[str, str]:
+) -> List[VideoTranscript]:
     """
     Extract transcripts from a list of Youtube video ids
     """
