@@ -12,6 +12,7 @@ from api.store import (
     query_allsides,
     query_mediabiasfactcheck,
 )
+from api.substack import SubstackPost, substack_search
 from api.x import Tweet, x_search
 from api.youtube import Video, VideoTranscript, youtube_search, youtube_transcripts
 from lib.auth import verify_apikey
@@ -284,6 +285,59 @@ async def get_x_search(
         period_days=period_days,
         end_date=end_date,
         max_tweets_per_user=max_tweets_per_user,
+    )
+    return results
+
+
+@app.get("/substack", response_model=List[SubstackPost])
+async def get_substack_search(
+    query: Annotated[
+        str,
+        Query(
+            title="Query string",
+            description="Query string used to search Substack publications.",
+            min_length=3,
+            examples=["ukraine"],
+        ),
+    ] = None,
+    publications: Annotated[
+        str,
+        Query(
+            title="Publications to search in",
+            description="A string of comma-separated Substack publication names to search in.",
+            examples=["greenwald,taibbi,matgyver"],
+        ),
+    ] = None,
+    max_posts_per_publication: Annotated[
+        int,
+        Query(
+            title="Max posts per publication",
+            description="The maximum number of posts per publication that we want from the search.",
+        ),
+    ] = 10,
+    get_content: Annotated[
+        bool,
+        Query(
+            title="Get content",
+            description="Whether to fetch the full content of posts as plain text (slower but includes body text).",
+        ),
+    ] = True,
+    _: None = Depends(verify_apikey),
+) -> List[SubstackPost]:
+    """
+    Find free posts on Substack by either providing publications, a query, or both.
+    Returns posts with plain text content (converted from HTML).
+    """
+    if not (publications or query):
+        raise HTTPException(
+            status_code=400,
+            detail='Either one of "query" or "publications" must be provided!',
+        )
+    results = await substack_search(
+        publications=publications,
+        query=query,
+        max_posts_per_publication=max_posts_per_publication,
+        get_content=get_content,
     )
     return results
 

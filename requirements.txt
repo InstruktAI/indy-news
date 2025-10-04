@@ -5,6 +5,7 @@ fastapi==0.115.12
 munch==4.0.0
 PyYAML==6.0.2
 streamlit==1.45.1
+substack-api==1.1.1
 twikit==2.3.3
 uvicorn==0.34.3
 youtube-transcript-api==1.1.0

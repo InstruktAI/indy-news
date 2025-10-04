@@ -1,8 +1,8 @@
 import asyncio
+import logging
 import os
 from datetime import datetime
 from http.cookies import SimpleCookie
-from logging import debug, error, info
 from typing import Dict, List, Optional
 
 import dotenv
@@ -15,6 +15,8 @@ from twikit import User as TwikitUser
 from api.store import get_data
 from lib.cache import async_threadsafe_ttl_cache
 from lib.utils import get_since_date
+
+logger = logging.getLogger(__name__)
 
 dotenv.load_dotenv()
 
@@ -52,7 +54,7 @@ async def _get_client() -> Client:
     if client._user_id is not None:
         return client
     if os.getenv("X_COOKIES"):
-        info("Using cookies from environment variable X_COOKIES")
+        logger.info("Using cookies from environment variable X_COOKIES")
         cookies_raw = os.getenv("X_COOKIES")
         cookie = SimpleCookie()
         cookie.load(cookies_raw)
@@ -60,11 +62,11 @@ async def _get_client() -> Client:
         client.set_cookies(cookies)
         return client
     if os.path.exists(cookies_file):
-        info(f"Loading cookies from file: {cookies_file}")
+        logger.info(f"Loading cookies from file: {cookies_file}")
         client.load_cookies(cookies_file)
         return client
     # otherwise, login
-    info("No cookies found, logging in with credentials")
+    logger.info("No cookies found, logging in with credentials")
     await client.login(
         auth_info_1=os.getenv("X_USER"),
         auth_info_2=os.getenv("X_EMAIL"),
@@ -100,7 +102,7 @@ async def x_search(
                 raise ValueError("end_date must be in YYYY-MM-DD format")
             raise e
 
-    debug(
+    logger.debug(
         f"Searching for tweets with users: {users}, query: {query}, period_days: {period_days}, end_date: {end_date}, max_tweets_per_user: {max_tweets_per_user}"
     )
     # Process users if provided
@@ -137,13 +139,13 @@ async def x_search(
     except Exception as e:
         if isinstance(e, HTTPException):
             # raise e
-            error(e)
+            logger.error(e)
         else:
             err = HTTPException(
                 status_code=500, detail=f"Failed to fetch tweets: {str(e)}"
             )
             # raise err
-            error(err)
+            logger.error(err)
         return []
 
 

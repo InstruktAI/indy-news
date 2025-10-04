@@ -1,9 +1,9 @@
 import asyncio
 import json
+import logging
 import time
 import urllib.parse
 from datetime import datetime
-from logging import error, info
 from typing import Dict, List, Optional, Union
 
 import dateparser
@@ -17,6 +17,8 @@ from api.store import get_data
 from lib.cache import async_threadsafe_ttl_cache
 from lib.cache import sync_threadsafe_ttl_cache as cache
 from lib.utils import get_since_date
+
+logger = logging.getLogger(__name__)
 
 
 class Transcript(BaseModel):
@@ -160,7 +162,7 @@ async def youtube_search(
     if len(channels_arr) == 0:
         return []
 
-    info(
+    logger.debug(
         f"Searching for videos on channels: {channels_arr}, query: {query}, period_days: {period_days}, end_date: {end_date}, max_videos_per_channel: {max_videos_per_channel}, get_descriptions: {get_descriptions}, get_transcripts: {get_transcripts}, char_cap: {char_cap}"
     )
 
@@ -180,10 +182,10 @@ async def youtube_search(
     try:
         results = await asyncio.gather(*tasks)
     except HTTPException as e:
-        error(e)
+        logger.error(e)
         raise e
     except Exception as e:
-        error(e)
+        logger.error(e)
         raise e
 
     res: List[Video] = []
