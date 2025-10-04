@@ -3,7 +3,7 @@
 
 for i in $(cat requirements-prod.txt) $(cat requirements-test.txt); do
   echo "Updating $i"
-  pip install --upgrade $i
+  pip3 install --upgrade $i
 done
 
 bin/requirements-freeze.sh

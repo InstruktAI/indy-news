@@ -5,6 +5,7 @@ fastapi
 munch
 pyyaml
 streamlit
+substack_api
 twikit
 uvicorn
 youtube-transcript-api
