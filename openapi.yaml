@@ -3,102 +3,6 @@ info:
   title: FastAPI
   version: 0.1.0
 paths:
-  /allsides:
-    get:
-      summary: Search Allsides
-      description: Search the AllSides database for a partial name
-      operationId: search_allsides_allsides_get
-      security:
-      - APIKeyQuery: []
-      - APIKeyHeader: []
-      - HTTPBearer: []
-      parameters:
-      - name: name
-        in: query
-        required: true
-        schema:
-          type: string
-          title: Name
-      - name: limit
-        in: query
-        required: false
-        schema:
-          type: integer
-          default: 5
-          title: Limit
-      - name: offset
-        in: query
-        required: false
-        schema:
-          type: integer
-          default: 0
-          title: Offset
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-                  additionalProperties:
-                    type: string
-                title: Response Search Allsides Allsides Get
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-  /mediabiasfactcheck:
-    get:
-      summary: Search Mediabiasfactcheck
-      description: Search the MediaBiasFactCheck database for a partial name
-      operationId: search_mediabiasfactcheck_mediabiasfactcheck_get
-      security:
-      - APIKeyQuery: []
-      - APIKeyHeader: []
-      - HTTPBearer: []
-      parameters:
-      - name: name
-        in: query
-        required: true
-        schema:
-          type: string
-          title: Name
-      - name: limit
-        in: query
-        required: false
-        schema:
-          type: integer
-          default: 5
-          title: Limit
-      - name: offset
-        in: query
-        required: false
-        schema:
-          type: integer
-          default: 0
-          title: Offset
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-                  additionalProperties:
-                    type: string
-                title: Response Search Mediabiasfactcheck Mediabiasfactcheck Get
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
   /media:
     get:
       summary: Search Media
@@ -586,26 +490,11 @@ components:
         X:
           type: string
           title: X
-        Bias:
+        Substack:
           anyOf:
           - type: string
           - type: 'null'
-          title: Bias
-        Profile:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Profile
-        Factual:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Factual
-        Credibility:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Credibility
+          title: Substack
       type: object
       required:
       - Name
@@ -616,10 +505,6 @@ components:
       - Topics
       - Wikipedia
       - X
-      - Bias
-      - Profile
-      - Factual
-      - Credibility
       title: Media
       description: Media model
     MediaMinimal:

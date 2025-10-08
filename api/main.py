@@ -12,8 +12,6 @@ from api.store import (
     SourceMedia,
     SourceMinimal,
     get_data,
-    query_allsides,
-    query_mediabiasfactcheck,
 )
 from api.substack import SubstackPost, substack_search
 from api.x import Tweet, x_search
@@ -33,30 +31,6 @@ class WebhookPayload(BaseModel):
     error: str | None = None
     iterations: int | None = None
     request_id: str | None = None
-
-
-@app.get("/allsides")
-def search_allsides(
-    name: str,
-    limit: int = 5,
-    offset: int = 0,
-    _: None = Depends(verify_apikey),
-) -> list[dict[str, str]]:
-    """Search the AllSides database for a partial name."""
-    results = query_allsides(name, limit, offset)
-    return results[offset:]
-
-
-@app.get("/mediabiasfactcheck")
-def search_mediabiasfactcheck(
-    name: str,
-    limit: int = 5,
-    offset: int = 0,
-    _: None = Depends(verify_apikey),
-) -> list[dict[str, str]]:
-    """Search the MediaBiasFactCheck database for a partial name."""
-    results = query_mediabiasfactcheck(name, limit, offset)
-    return results[offset:]
 
 
 @app.get("/media")
@@ -160,6 +134,22 @@ def get_youtube_channels(
 ) -> list[str]:
     """Returns a list of sources' Youtube channels."""
     return get_column_values("Youtube")
+
+
+@app.get("/x-users")
+def get_x_users(
+    _: Annotated[None, Depends(verify_apikey)],
+) -> list[str]:
+    """Returns a list of sources' X user handles."""
+    return get_column_values("X")
+
+
+@app.get("/substack-publications")
+def get_substack_publications(
+    _: Annotated[None, Depends(verify_apikey)],
+) -> list[str]:
+    """Returns a list of sources' Substack publication names."""
+    return get_column_values("Substack")
 
 
 @app.get("/youtube")
@@ -487,18 +477,6 @@ async def receive_cookies(
 @app.get("/privacy")
 async def read_privacy() -> str:
     return "You are ok"
-
-
-if __name__ == "__main__":
-    import uvicorn
-
-    uvicorn.run(app, host="0.0.0.0", port=8088)
-
-
-if __name__ == "__main__":
-    import uvicorn
-
-    uvicorn.run(app, host="0.0.0.0", port=8088)
 
 
 if __name__ == "__main__":

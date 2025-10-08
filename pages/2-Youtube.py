@@ -26,7 +26,7 @@ query = st.text_input(
 )
 channels = st.multiselect(
     "Provide one or more channels to search in...",
-    get_youtube_channels(),
+    [channel for channel in get_youtube_channels() if channel != "n/a"],
     default=["@thegrayzone7996", "@aljazeeraenglish", "@DemocracyNow"],
 )
 

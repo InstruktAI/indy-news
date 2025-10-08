@@ -16,5 +16,6 @@ FROM python:3.12-slim
 WORKDIR /app
 COPY --from=base /app /app
 COPY . /app
+ENV PATH="/app/.venv/bin:$PATH"
 
-CMD ["./start.sh"]
+CMD [".venv/bin/uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8080"]

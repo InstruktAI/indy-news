@@ -1,8 +1,33 @@
-__pycache__
-.devcontainer
-.history
-.venv
+# Python
+__pycache__/
+*.py[cod]
+*_cache/
+
+# Virtual environment
+.venv/
+
+# Environment variables
 .env
-cache
+
+# Cache and temporary files
+cache/
 cookies.json
 data/combined.json
+
+# IDEs
+.vscode/
+.devcontainer/
+.history/
+
+# Testing
+.coverage
+htmlcov/
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+
+# Streamlit
+.streamlit/secrets.toml

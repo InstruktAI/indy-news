@@ -1,49 +1,85 @@
 # Indy News
 
-The API used by the [Indy News assistant](https://indy-news.instrukt.ai).
+The FastAPI used by the [Indy News assistant](https://indy-news.instrukt.ai).
+A service that aggregates content from independent media outlets across YouTube, X/Twitter, and Substack.
 
-It uses [a selection of trusted news sources](https://github.com/Morriz/indy-news/blob/main/data/all.csv) to retrieve their publications for a time window and a potential topic of interest.
+<img src="https://raw.githubusercontent.com/InstruktAI/indy-news/main/logo.jpg" alt="Indy News Logo" />
 
-## Search for relevant independent media outlets
+## Why Independent News Matters
 
-- [/media](http://127.0.0.1:8000/media?names=The%20Grayzone,Al%20Jazeera,Democracy%20Now)
+In an era dominated by corporate media conglomerates, independent journalism serves as a critical counterweight to mainstream propaganda. Corporate media often omits, downplays, or censors stories that challenge establishment narratives or powerful interests. Independent outlets reveal what is censored, provide context that is suppressed, and amplify voices that are silenced.
 
-## Search for relevant youtube videos
+However, discovering and tracking quality independent sources across multiple platforms remains challenging.
 
-- [/youtube](http://127.0.0.1:8000/youtube?channels=@thegrayzone7996,@aljazeeraenglish,@DemocracyNow&query=israel&end_date=2025-02-06&period_days=90)
+Indy News solves this by:
 
-## Search for relevant X tweets
+- **Curating** a vetted collection of independent media outlets spanning the political spectrum
+- **Aggregating** their content from YouTube, X, and Substack in one unified API
+- **Enabling** time-based and topic-based searches across all platforms simultaneously
+- **Revealing** stories and perspectives that are censored or ignored by mainstream media
 
-- [/x](http://127.0.0.1:8000/x?users=TheGrayzoneNews,AJEnglish,democracynow&query=israel&end_date=2025-02-06&period_days=90)
+This makes independent journalism more discoverable and accessible, empowering readers to break free from algorithmic filter bubbles, counter establishment propaganda, and seek diverse viewpoints.
 
-Prerequisites: Please first log in to X and log your cookies an place them in `.env` under `SVC_COOKIE`. It should look like this:
+## Data Sources
 
+[Curated source list](https://github.com/InstruktAI/indy-news/blob/main/data/sources.csv) - Independent media outlets with platform handles
+
+## Live Streamlit App
+
+A Streamlit interface is deployed at **[indy-news.streamlit.app](https://indy-news.streamlit.app)**
+
+Available pages:
+
+- **Media** - Search and browse independent media sources
+- **Youtube** - Search YouTube videos by channel and topic with transcript support
+- **X** - Search X/Twitter posts by user and topic with date filtering
+- **Substack** - Search Substack articles by publication and topic
+
+## Getting Started
+
+```bash
+# Install dependencies
+make install
+
+# Run the API server
+make run
 ```
-SVC_COOKIES='  lang=en; guest_id=123; night_mode=2; _twitter_sess=ABC--DEF; d_prefs=GJHHJVS; guest_id_ads=v1%3A1223423434; guest_id_marketing=v1%3A23423423423; personalization_id="v1_dasdiuhjKIvhhb=="; kdt=KJBNDFSbfsdksLKSDFJSDF; auth_token=sfsefsdfs234n2bn34j23kj4n2k; ct0=jsdfkdnksdndajsk21323kjn42kj; att=1kjfnaskNknlnlsfsaldkf; lang=en; twid=u%3D1342342342'
+
+The API will be available at `http://127.0.0.1:8088`
+
+### X/Twitter Setup
+
+X search requires authenticated cookies. Export your browser cookies and add to `.env`:
+
+```bash
+SVC_COOKIES='lang=en; guest_id=123; auth_token=...; ct0=...; twid=u%3D1234567890; ...
 ```
 
-## Check the ratings DBs we used
+If you want to clone this repo and scrape your own X sources, you can use our open source [cookie-service](https://github.com/InstruktAI/cookie-service). Once running it accepts the necessary credentials and will rotate your cookies automatically.
 
-It also contains some endpoints to see where the ratings come from:
+## API Endpoints
 
-- [/allsides](http://127.0.0.1:8000/allsides?query=israel)
-- [/mediabiasfactcheck](http://127.0.0.1:8000/mediabiasfactcheck?query=israel)
+### Content Search
 
-### Databases used (see `data/` folder)
+Search across platforms with optional time windows and topic filters:
 
-- all.csv: our source selection of media outlets
-- allsides.com.json: snapshot of the AllSides db
-- mediabiasfactcheck.com.json: snapshot of the [MediaBiasFactCheck db](https://mediabiasfactcheck.com)
+- **[/youtube](http://127.0.0.1:8000/youtube?channels=@thegrayzone7996,@aljazeeraenglish&query=israel&end_date=2025-02-06&period_days=90)** - YouTube videos with transcript support
+- **[/x](http://127.0.0.1:8000/x?users=TheGrayzoneNews,AJEnglish&query=israel&end_date=2025-02-06&period_days=90)** - X/Twitter posts
+- **[/substack](http://127.0.0.1:8000/substack?publications=grayzoneproject&query=israel)** - Substack articles
+- **[/news](http://127.0.0.1:8000/news?query=israel&end_date=2025-02-06&period_days=90)** - Combined YouTube + X search
 
-### Dev instructions
+### Source Discovery
 
-1. Install and activate `.venv` and `pip install -r requirements.txt`
+- **[/sources](http://127.0.0.1:8000/sources)** - List all curated sources with metadata
+- **[/source-media](http://127.0.0.1:8000/source-media)** - Get platform handles for sources
+- **[/media](http://127.0.0.1:8000/media?names=The%20Grayzone,Democracy%20Now)** - Search source database
 
-2. Run
+## Development
 
-- FastAPI: `.venv/bin/uvicorn --host "0.0.0.0" -p 8088`
-- StreamLit `.venv/bin/streamlit run Home.py`
-
+```bash
+make format    # Format code with isort and black
+make lint      # Run pylint and mypy
+make test      # Run pytest suite
 ```
 
-```
+See [CLAUDE.md](./CLAUDE.md) for architecture details.

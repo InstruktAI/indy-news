@@ -27,9 +27,9 @@ dynamic = ["dependencies", "optional-dependencies"]
 requires-python = ">=3.11"
 
 [project.urls]
-homepage = "https://github.com/morriz/indy-news"
-"Source Code" = "https://github.com/morriz/indy-news"
-"Bug Tracker" = "https://github.com/morriz/indy-news/issues"
+homepage = "https://github.com/InstruktAI/indy-news"
+"Source Code" = "https://github.com/InstruktAI/indy-news"
+"Bug Tracker" = "https://github.com/InstruktAI/indy-news/issues"
 
 [tool.black]
 line-length = 88

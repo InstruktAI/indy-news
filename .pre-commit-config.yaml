@@ -17,8 +17,3 @@ repos:
         entry: make lint
         language: system
         pass_filenames: false
-      - id: db
-        name: Update db
-        entry: .venv/bin/python bin/update-db.py
-        language: system
-        pass_filenames: false

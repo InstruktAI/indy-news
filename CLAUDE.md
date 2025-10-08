@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Indy News is a FastAPI-based service that aggregates content from independent media outlets across multiple platforms (YouTube, X/Twitter, Substack). It provides curated news sources with bias ratings from AllSides and MediaBiasFactCheck databases.
+Indy News is a FastAPI-based service that aggregates content from independent media outlets across multiple platforms (YouTube, X/Twitter, Substack).
 
 ## Development Setup
 
@@ -102,19 +102,12 @@ All endpoints require API key authentication via query param `apikey`, header `X
 - `/sources` - List all curated sources (names, about, topics)
 - `/source-media` - Get YouTube/X/Substack handles for sources
 - `/media` - Search curated independent media database
-- `/allsides` - Query AllSides bias ratings database
-- `/mediabiasfactcheck` - Query MediaBiasFactCheck database
 
 ### Data Layer (`api/store.py`)
 
-Manages three data sources in `data/` directory:
+Manages data sources in `data/` directory:
 
-- `all.csv` - Curated independent media sources
-- `allsides.com.json` - AllSides bias ratings snapshot
-- `mediabiasfactcheck.com.json` - MediaBiasFactCheck ratings snapshot
-- `combined.json` - Runtime-generated merged dataset (cached)
-
-The `get_data()` function merges CSV with bias/factual ratings and caches to `data/combined.json`.
+- `sources.csv` - Curated independent media sources with platform handles
 
 ### Platform Integrations
 
