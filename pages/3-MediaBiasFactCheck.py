@@ -3,7 +3,7 @@ import streamlit.components.v1 as components
 
 from api.main import search_mediabiasfactcheck
 
-with open("index.html", "r") as f:
+with open("index.html", encoding="utf-8") as f:
     html_code = f.read()
     components.html(html_code, height=0)
 
@@ -14,7 +14,7 @@ st.markdown(
 ## Search for ALL media outlets by partial name. (Only a small selection is used in Media!)
 Uses a snapshot of the MediaBiasFactCheck DB (5714 records) and checks wether input is found in the *NAME* only.
 (Only records with a confidence score of "medium" or "high" are included.)
-"""
+""",
 )
 name = st.text_input("Search by name...", value="Democracy Now", max_chars=255)
 

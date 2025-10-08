@@ -6,7 +6,7 @@ import streamlit.components.v1 as components
 from api.main import get_youtube_channels
 from api.youtube import youtube_search
 
-with open("index.html", "r") as f:
+with open("index.html", encoding="utf-8") as f:
     html_code = f.read()
     components.html(html_code, height=0)
 
@@ -16,7 +16,7 @@ st.markdown(
     """
 ## Get an overview of youtube videos that indy media are publishing (potentially on a topic).
 (Results are cached one hour.)
-"""
+""",
 )
 query = st.text_input(
     "Topic (leave empty to get latest)...",
@@ -48,7 +48,7 @@ period_days = int(
     st.text_input(
         "Period (days up till end_date)",
         st.query_params.period_days if "period_days" in st.query_params else 3,
-    )
+    ),
 )
 show_as_videos = st.checkbox(
     "Show as videos",

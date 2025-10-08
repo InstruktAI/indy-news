@@ -12,7 +12,7 @@ def async_threadsafe_ttl_cache(func: Any = None, ttl: int = 60) -> Any:
     def decorator(decorated_func: Any) -> Any:
         async def wrapper(*args: Any, **kwargs: Any) -> Any:
             # Does not use 'session' in the key
-            kwargs_for_key = {i: kwargs[i] for i in kwargs if i != "session"}
+            kwargs_for_key = {k: v for k, v in kwargs.items() if k != "session"}
             key = hashkey(*args, **kwargs_for_key)
             if key in cache:
                 return cache[key]
@@ -34,7 +34,7 @@ def sync_threadsafe_ttl_cache(func: Any = None, ttl: int = 60) -> Any:
     def decorator(decorated_func: Any) -> Any:
         def wrapper(*args: Any, **kwargs: Any) -> Any:
             # Does not use 'session' in the key
-            kwargs_for_key = {i: kwargs[i] for i in kwargs if i != "session"}
+            kwargs_for_key = {k: v for k, v in kwargs.items() if k != "session"}
             key = hashkey(*args, **kwargs_for_key)
             if key in cache:
                 return cache[key]

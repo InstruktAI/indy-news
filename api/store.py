@@ -1,6 +1,5 @@
 import json
 import os
-from typing import Dict, List, Union
 
 import pandas as pd
 from pydantic import BaseModel
@@ -11,19 +10,19 @@ csv_file = "./data/all.csv"
 
 
 class SourceMedia(BaseModel):
-    """Source minimal model"""
+    """Source minimal model."""
 
     Name: str
-    Youtube: Union[str, None]
+    Youtube: str | None
     """Youtube channel"""
-    X: Union[str, None]
+    X: str | None
     """X (formerly Twitter) handle"""
-    Substack: Union[str, None]
+    Substack: str | None
     """Substack handle"""
 
 
 class Source(BaseModel):
-    """Media model"""
+    """Media model."""
 
     Name: str
     Website: str
@@ -33,22 +32,22 @@ class Source(BaseModel):
     Topics: str
     Wikipedia: str
     X: str
-    Substack: Union[str, None]
-    Bias: Union[str, None]
-    Profile: Union[str, None]
-    Factual: Union[str, None]
-    Credibility: Union[str, None]
+    Substack: str | None
+    Bias: str | None
+    Profile: str | None
+    Factual: str | None
+    Credibility: str | None
 
 
 class SourceMinimal(BaseModel):
-    """Source model"""
+    """Source model."""
 
     Name: str
     About: str
     Topics: str
 
 
-def _merge_facts(df: pd.DataFrame, facts: Dict[str, Dict[str, str]]) -> pd.DataFrame:
+def _merge_facts(df: pd.DataFrame, facts: dict[str, dict[str, str]]) -> pd.DataFrame:
     def merge_fact(row: pd.Series) -> pd.Series:
         name = row["Name"].lower()
         if name in facts:
@@ -58,13 +57,13 @@ def _merge_facts(df: pd.DataFrame, facts: Dict[str, Dict[str, str]]) -> pd.DataF
             row["Factual"] = fact["factual"]
             row["Credibility"] = fact["credibility"]
         else:
-            print(f"Facts not found for {name}")
+            pass
         return row
 
     return df.apply(merge_fact, axis=1)
 
 
-def get_data(force: bool = False) -> List[Dict[str, str]]:
+def get_data(force: bool = False) -> list[dict[str, str]]:
     combined = "data/combined.json"
     if not force and os.path.exists(combined):
         with open(combined, encoding="utf-8") as f:
@@ -83,7 +82,7 @@ def get_data(force: bool = False) -> List[Dict[str, str]]:
         return data
 
 
-def query_allsides(query: str, limit: int = 5, offset: int = 0) -> List[Dict[str, str]]:
+def query_allsides(query: str, limit: int = 5, offset: int = 0) -> list[dict[str, str]]:
     with open(allsides_file, encoding="utf-8") as f:
         fact_list = json.load(f)
     results = []
@@ -94,16 +93,21 @@ def query_allsides(query: str, limit: int = 5, offset: int = 0) -> List[Dict[str
 
 
 def query_mediabiasfactcheck(
-    query: str, limit: int = 5, offset: int = 0
-) -> List[Dict[str, str]]:
+    query: str,
+    limit: int = 5,
+    offset: int = 0,
+) -> list[dict[str, str]]:
     with open(mbfc_file, encoding="utf-8") as f:
         fact_list = json.load(f)
     results = []
     for item in fact_list:
-        if query.lower() in item["name"].lower():
-            if item["credibility"] in [
+        if query.lower() in item["name"].lower() and (
+            item["credibility"]
+            in [
                 "medium credibility",
                 "high credibility",
-            ] or item["factual"] in ["factual", "mostly", "mixed"]:
-                results.append(item)
+            ]
+            or item["factual"] in ["factual", "mostly", "mixed"]
+        ):
+            results.append(item)
     return results[offset : offset + limit]

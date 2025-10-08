@@ -1,15 +1,18 @@
+from collections.abc import Generator
 from contextlib import contextmanager
 from threading import Lock
-from typing import Any, Dict, Generator
+from typing import Any
 
 namespace_lock = Lock()
-namespace: Dict[str, Lock] = {}
-counters: Dict[str, int] = {}
+namespace: dict[str, Lock] = {}
+counters: dict[str, int] = {}
 
 
 @contextmanager
 def parameterized_lock(
-    value: Any, blocking: bool = True, timeout: float = -1.0
+    value: Any,
+    blocking: bool = True,
+    timeout: float = -1.0,
 ) -> Generator[bool, None, None]:
     try:
         with namespace_lock:

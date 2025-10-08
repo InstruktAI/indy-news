@@ -9,13 +9,16 @@ repos:
     hooks:
       - id: format
         name: Format code
-        entry: bin/format.sh
-        language: script
+        entry: make format
+        language: system
+        pass_filenames: false
       - id: lint
         name: Lint code
-        entry: bin/lint.sh
-        language: script
+        entry: make lint
+        language: system
+        pass_filenames: false
       - id: db
         name: Update db
-        entry: bin/update-db.py
-        language: script
+        entry: .venv/bin/python bin/update-db.py
+        language: system
+        pass_filenames: false

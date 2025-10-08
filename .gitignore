@@ -3,5 +3,6 @@ __pycache__
 .history
 .venv
 .env
+cache
 cookies.json
 data/combined.json

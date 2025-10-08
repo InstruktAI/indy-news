@@ -1,6 +1,6 @@
 aiohttp
 dateparser
-dotenv
+python-dotenv
 fastapi
 munch
 pyyaml

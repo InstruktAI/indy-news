@@ -10,7 +10,7 @@ RUN .venv/bin/pip install --no-cache-dir -r requirements-test.txt
 
 FROM ci as test
 COPY . /app
-RUN bin/format.sh && bin/lint.sh && bin/test.sh
+RUN make lint && make test
 
 FROM python:3.12-slim
 WORKDIR /app

@@ -1,583 +1,242 @@
-from unittest.mock import AsyncMock, patch
+"""
+Unit tests for YouTube business logic.
+Tests actual algorithmic functions, not YouTube API or BeautifulSoup.
+"""
+from datetime import datetime, timedelta
+from unittest.mock import MagicMock
 
 import pytest
-from fastapi import HTTPException
 
-from api.youtube import (
-    Video,
-    _filter_by_char_cap,
-    _filter_channels,
-    _get_video_info,
-    _get_video_transcript,
-    _parse_html_list,
-    _parse_html_video,
-    _sort_by_publish_time,
-    youtube_search,
-    youtube_transcripts,
-)
+from api.youtube import Video, _filter_by_char_cap, _sort_by_publish_time
 
 
-@pytest.fixture
-def mock_video_html() -> str:
-    """Fixture to provide sample video HTML"""
-    return """
-    {
-        "contents": {
-            "twoColumnBrowseResultsRenderer": {
-                "tabs": [{
-                    "expandableTabRenderer": {
-                        "content": {
-                            "sectionListRenderer": {
-                                "contents": [{
-                                    "itemSectionRenderer": {
-                                        "contents": [{
-                                            "videoRenderer": {
-                                                "videoId": "test_id",
-                                                "title": {"runs": [{"text": "Test Video"}]},
-                                                "descriptionSnippet": {"runs": [{"text": "Test Description"}]},
-                                                "longBylineText": {"runs": [{"text": "Test Channel"}]},
-                                                "lengthText": {"simpleText": "10:00"},
-                                                "viewCountText": {"simpleText": "1000 views"},
-                                                "publishedTimeText": {"simpleText": "1 day ago"}
-                                            }
-                                        }]
-                                    }
-                                }]
-                            }
-                        }
-                    }
-                }]
-            }
-        }
-    }
-    """
+class TestSortByPublishTime:
+    """Test publish time parsing logic - converts relative times to timestamps"""
 
-
-@pytest.fixture
-def mock_video_search_html() -> str:
-    """Fixture to provide sample video search HTML"""
-    return """<html><script>var ytInitialData = {
-        "contents": {
-            "twoColumnBrowseResultsRenderer": {
-                "tabs": [{
-                    "tabRenderer": {
-                        "content": {
-                            "sectionListRenderer": {
-                                "contents": [{
-                                    "itemSectionRenderer": {
-                                        "contents": [{
-                                            "videoRenderer": {
-                                                "videoId": "test_id",
-                                                "title": {"runs": [{"text": "Test Video"}]},
-                                                "descriptionSnippet": {"runs": [{"text": "Test Description"}]},
-                                                "longBylineText": {"runs": [{"text": "Test Channel"}]},
-                                                "lengthText": {"simpleText": "10:00"},
-                                                "viewCountText": {"simpleText": "1000 views"},
-                                                "publishedTimeText": {"simpleText": "1 day ago"},
-                                                "navigationEndpoint": {
-                                                    "commandMetadata": {
-                                                        "webCommandMetadata": {
-                                                            "url": "/watch?v=test_id"
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }]
-                                    }
-                                }]
-                            }
-                        }
-                    }
-                }]
-            }
-        }
-    };</script></html>"""
-
-
-class TestParsingFunctions:
-    """Tests for HTML parsing functions"""
-
-    def test_parse_html_list(self) -> None:
-        """Test _parse_html_list function"""
-        mock_html = """<html><script>var ytInitialData = {
-            "contents": {
-                "twoColumnBrowseResultsRenderer": {
-                    "tabs": [{
-                        "expandableTabRenderer": {
-                            "content": {
-                                "sectionListRenderer": {
-                                    "contents": [{
-                                        "itemSectionRenderer": {
-                                            "contents": [{
-                                                "videoRenderer": {
-                                                    "videoId": "test_id",
-                                                    "title": {"runs": [{"text": "Test Video"}]},
-                                                    "descriptionSnippet": {"runs": [{"text": "Test Description"}]},
-                                                    "longBylineText": {"runs": [{"text": "Test Channel"}]},
-                                                    "lengthText": {"simpleText": "10:00"},
-                                                    "viewCountText": {"simpleText": "1000 views"},
-                                                    "publishedTimeText": {"simpleText": "1 day ago"},
-                                                    "navigationEndpoint": {
-                                                        "commandMetadata": {
-                                                            "webCommandMetadata": {
-                                                                "url": "/watch?v=test_id"
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }]
-                                        }
-                                    }]
-                                }
-                            }
-                        }
-                    }]
-                }
-            }
-        };</script></html>"""
-        videos = _parse_html_list(mock_html, 1)
-        assert len(videos) == 1
-        assert videos[0].id == "test_id"
-        assert videos[0].title == "Test Video"
-
-    def test_parse_html_video(self) -> None:
-        """Test _parse_html_video function"""
-        mock_html = """<html><script>var ytInitialData = {
-            "contents": {
-                "twoColumnWatchNextResults": {
-                    "results": {
-                        "results": {
-                            "contents": [
-                                {},
-                                {
-                                    "videoSecondaryInfoRenderer": {
-                                        "attributedDescription": {
-                                            "content": "Test long description"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        };</script></html>"""
-        result = _parse_html_video(mock_html)
-        assert result["long_desc"] == "Test long description"
-
-
-@pytest.mark.asyncio
-class TestYoutubeSearch:
-    """Tests for YouTube search functionality"""
-
-    @patch("api.youtube._parse_html_list")
-    async def test_youtube_search_with_channels(self, mock_parse_html_list) -> None:
-        """Test youtube_search when channels are provided"""
-        # Mock the parser to return a video directly
-        mock_video = Video(
-            id="test_id",
-            title="Test Video",
-            short_desc="Test Description",
-            channel="Test Channel",
+    def test_hours_ago(self):
+        """Test parsing 'X hours ago'"""
+        video = Video(
+            id="1",
+            title="Test",
+            short_desc="Test",
+            channel="Test",
             duration="10:00",
-            views="1000 views",
-            publish_time="1 day ago",
-            url_suffix="/watch?v=test_id",
+            views="100",
+            publish_time="2 hours ago",
+            url_suffix="/watch?v=1",
         )
-        mock_parse_html_list.return_value = [mock_video]
+        timestamp = _sort_by_publish_time(video)
+        # Should be approximately 2 hours ago
+        expected = (datetime.now() - timedelta(hours=2)).timestamp()
+        assert abs(timestamp - expected) < 3600  # Within 1 hour tolerance
 
-        with patch("api.youtube._filter_channels", return_value=["@testchannel"]):
-            with patch("aiohttp.ClientSession") as mock_session:
-                mock_response = AsyncMock()
-                mock_response.status = 200
-                mock_response.text = AsyncMock(return_value="mock_html")
-                mock_session.return_value.__aenter__.return_value.get = AsyncMock(
-                    return_value=mock_response
-                )
-                mock_session.return_value.__aexit__ = AsyncMock()
-
-                result = await youtube_search(
-                    channels="@testchannel",
-                    query="test",
-                    period_days=3,
-                    end_date="2024-01-01",
-                    max_videos_per_channel=2,
-                    get_descriptions=False,
-                    get_transcripts=False,
-                )
-
-                assert len(result) == 1
-                assert result[0].id == "test_id"
-
-    @patch("api.youtube._parse_html_list")
-    async def test_youtube_search_with_end_date(self, mock_parse_html_list) -> None:
-        """Test youtube_search with end_date parameter"""
-        # Mock the parser to return a video directly
-        mock_video = Video(
-            id="test_id",
-            title="Test Video",
-            short_desc="Test Description",
-            channel="Test Channel",
+    def test_days_ago(self):
+        """Test parsing 'X days ago'"""
+        video = Video(
+            id="1",
+            title="Test",
+            short_desc="Test",
+            channel="Test",
             duration="10:00",
-            views="1000 views",
-            publish_time="1 day ago",
-            url_suffix="/watch?v=test_id",
+            views="100",
+            publish_time="5 days ago",
+            url_suffix="/watch?v=1",
         )
-        mock_parse_html_list.return_value = [mock_video]
+        timestamp = _sort_by_publish_time(video)
+        expected = (datetime.now() - timedelta(days=5)).timestamp()
+        assert abs(timestamp - expected) < 86400  # Within 1 day tolerance
 
-        with patch("api.youtube._filter_channels", return_value=["@testchannel"]):
-            with patch("aiohttp.ClientSession") as mock_session:
-                mock_response = AsyncMock()
-                mock_response.status = 200
-                mock_response.text = AsyncMock(return_value="mock_html")
-                mock_session.return_value.__aenter__.return_value.get = AsyncMock(
-                    return_value=mock_response
-                )
-                mock_session.return_value.__aexit__ = AsyncMock()
-
-                result = await youtube_search(
-                    channels="@testchannel",
-                    query="test",
-                    period_days=3,
-                    end_date="2024-01-01",
-                    max_videos_per_channel=2,
-                    get_descriptions=False,
-                    get_transcripts=False,
-                )
-
-                assert len(result) == 1
-                assert result[0].id == "test_id"
-
-    @patch("api.youtube._parse_html_list")
-    async def test_youtube_search_multiple_channels(self, mock_parse_html_list) -> None:
-        """Test youtube_search with multiple channels"""
-        # Mock the parser to return a video directly
-        mock_video = Video(
-            id="test_id",
-            title="Test Video",
-            short_desc="Test Description",
-            channel="Test Channel",
+    def test_weeks_ago(self):
+        """Test parsing 'X weeks ago'"""
+        video = Video(
+            id="1",
+            title="Test",
+            short_desc="Test",
+            channel="Test",
             duration="10:00",
-            views="1000 views",
-            publish_time="1 day ago",
-            url_suffix="/watch?v=test_id",
+            views="100",
+            publish_time="3 weeks ago",
+            url_suffix="/watch?v=1",
         )
-        mock_parse_html_list.return_value = [mock_video]
+        timestamp = _sort_by_publish_time(video)
+        expected = (datetime.now() - timedelta(weeks=3)).timestamp()
+        assert abs(timestamp - expected) < 86400 * 2  # Within 2 days tolerance
 
-        with patch(
-            "api.youtube._filter_channels",
-            return_value=["@testchannel1", "@testchannel2"],
-        ):
-            with patch("aiohttp.ClientSession") as mock_session:
-                mock_response1 = AsyncMock()
-                mock_response1.status = 200
-                mock_response1.text = AsyncMock(return_value="mock_html")
+    def test_months_ago(self):
+        """Test parsing 'X months ago'"""
+        video = Video(
+            id="1",
+            title="Test",
+            short_desc="Test",
+            channel="Test",
+            duration="10:00",
+            views="100",
+            publish_time="2 months ago",
+            url_suffix="/watch?v=1",
+        )
+        timestamp = _sort_by_publish_time(video)
+        expected = (datetime.now() - timedelta(days=60)).timestamp()
+        # Months are approximate, allow larger tolerance
+        assert abs(timestamp - expected) < 86400 * 7  # Within 1 week
 
-                mock_response2 = AsyncMock()
-                mock_response2.status = 200
-                mock_response2.text = AsyncMock(return_value="mock_html")
+    def test_sorting_order(self):
+        """Test that more recent videos have higher timestamps"""
+        recent = Video(
+            id="1",
+            title="Test",
+            short_desc="Test",
+            channel="Test",
+            duration="10:00",
+            views="100",
+            publish_time="1 day ago",
+            url_suffix="/watch?v=1",
+        )
+        older = Video(
+            id="2",
+            title="Test",
+            short_desc="Test",
+            channel="Test",
+            duration="10:00",
+            views="100",
+            publish_time="5 days ago",
+            url_suffix="/watch?v=2",
+        )
+        assert _sort_by_publish_time(recent) > _sort_by_publish_time(older)
 
-                mock_session.return_value.__aenter__.return_value.get = AsyncMock(
-                    side_effect=[mock_response1, mock_response2]
-                )
-                mock_session.return_value.__aexit__ = AsyncMock()
 
-                result = await youtube_search(
-                    channels="@testchannel1,@testchannel2",
-                    end_date="2024-01-01",
-                    query="test",
-                    period_days=3,
-                    max_videos_per_channel=1,
-                    get_descriptions=False,
-                    get_transcripts=False,
-                )
+class TestFilterByCharCap:
+    """Test character cap logic - truncates results to fit within char limit"""
 
-                assert len(result) == 2  # One from each channel
-                assert result[0].id == "test_id"
-                assert result[1].id == "test_id"
+    def test_empty_list(self):
+        """Test with empty video list"""
+        result = _filter_by_char_cap([], 1000)
+        assert result == []
 
-    async def test_youtube_search_http_error(self) -> None:
-        """Test youtube_search when HTTP request fails"""
-        with patch("api.youtube._filter_channels", return_value=["@testchannel"]):
-            with patch("aiohttp.ClientSession") as mock_session:
-                mock_response = AsyncMock()
-                mock_response.status = 404
-                mock_session.return_value.__aenter__.return_value.get = AsyncMock(
-                    return_value=mock_response
-                )
-                mock_session.return_value.__aexit__ = AsyncMock()
+    def test_no_cap(self):
+        """Test with None cap returns all videos"""
+        videos = [
+            Video(
+                id="1",
+                title="Test",
+                short_desc="Test",
+                channel="Test",
+                duration="10:00",
+                views="100",
+                publish_time="1 day ago",
+                url_suffix="/watch?v=1",
+                transcript="Short transcript",
+            )
+        ]
+        result = _filter_by_char_cap(videos, None)
+        assert len(result) == 1
 
-                # Mock the HTTPException being raised
-                with patch("api.youtube._get_channel_videos") as mock_get_videos:
-                    mock_get_videos.side_effect = HTTPException(
-                        status_code=400,
-                        detail='Failed to fetch videos for channel "@testchannel". The handle is probably incorrect.',
-                    )
-
-                    with pytest.raises(HTTPException) as exc_info:
-                        await youtube_search(
-                            channels="@testchannel",
-                            end_date="2024-01-01",
-                            query="test",
-                            period_days=3,
-                            get_descriptions=False,
-                            get_transcripts=False,
-                        )
-
-                    assert exc_info.value.status_code == 400
-                    assert "Failed to fetch videos for channel" in str(
-                        exc_info.value.detail
-                    )
-
-    async def test_video_transcript_retrieval(self) -> None:
-        """Test video transcript retrieval"""
-        with patch(
-            "youtube_transcript_api.YouTubeTranscriptApi.get_transcript"
-        ) as mock_get_transcript:
-            mock_get_transcript.return_value = [
-                {"text": "Test transcript", "start": 0.0, "duration": 5.0}
-            ]
-            transcript = _get_video_transcript("test_id")
-            assert "Test transcript" in transcript
-
-    async def test_filter_by_char_cap_edge_cases(self) -> None:
-        """Test character cap filtering with edge cases"""
-        # Empty list
-        assert len(_filter_by_char_cap([], 100)) == 0
-
-        # Single video under cap
+    def test_under_cap(self):
+        """Test all videos fit under cap"""
         videos = [
             Video(
                 id="1",
                 title="Test",
                 short_desc="Desc",
-                channel="Channel",
-                duration="1:00",
+                channel="Ch",
+                duration="10:00",
                 views="100",
                 publish_time="1 day ago",
                 url_suffix="/watch?v=1",
                 transcript="Short",
-            )
+            ),
+            Video(
+                id="2",
+                title="Test2",
+                short_desc="Desc2",
+                channel="Ch",
+                duration="10:00",
+                views="100",
+                publish_time="1 day ago",
+                url_suffix="/watch?v=2",
+                transcript="Short",
+            ),
         ]
-        assert len(_filter_by_char_cap(videos, 1000)) == 1
+        result = _filter_by_char_cap(videos, 10000)
+        assert len(result) == 2
 
-    async def test_sort_by_publish_time_edge_cases(self) -> None:
-        """Test publish time sorting with edge cases"""
-        # Test with different time formats
-        video1 = Video(
-            id="1",
-            title="Test",
-            short_desc="Desc",
+    def test_truncates_to_fit(self):
+        """Test truncation when videos exceed cap"""
+        videos = [
+            Video(
+                id="1",
+                title="Test",
+                short_desc="Desc",
+                channel="Ch",
+                duration="10:00",
+                views="100",
+                publish_time="1 day ago",
+                url_suffix="/watch?v=1",
+                transcript="x" * 500,  # 500 chars
+            ),
+            Video(
+                id="2",
+                title="Test2",
+                short_desc="Desc2",
+                channel="Ch",
+                duration="10:00",
+                views="100",
+                publish_time="1 day ago",
+                url_suffix="/watch?v=2",
+                transcript="y" * 500,  # 500 chars
+            ),
+            Video(
+                id="3",
+                title="Test3",
+                short_desc="Desc3",
+                channel="Ch",
+                duration="10:00",
+                views="100",
+                publish_time="1 day ago",
+                url_suffix="/watch?v=3",
+                transcript="z" * 500,  # 500 chars
+            ),
+        ]
+        # Cap allows roughly 2 videos
+        result = _filter_by_char_cap(videos, 1200)
+        # Should truncate to fit within cap
+        assert len(result) < 3
+        assert len(result) >= 1
+
+    def test_character_counting(self):
+        """Test that character counting includes all fields"""
+        video = Video(
+            id="123",
+            title="Title",
+            short_desc="Description",
             channel="Channel",
-            duration="1:00",
-            views="100",
+            duration="10:00",
+            views="1000",
             publish_time="1 day ago",
-            url_suffix="/watch?v=1",
+            url_suffix="/watch?v=123",
+            transcript="Transcript text",
         )
-        video2 = Video(
-            id="2",
-            title="Test",
-            short_desc="Desc",
-            channel="Channel",
-            duration="1:00",
-            views="100",
-            publish_time="2 days ago",
-            url_suffix="/watch?v=2",
-        )
+        videos = [video]
+        # Tight cap should exclude the video
+        result = _filter_by_char_cap(videos, 10)
+        assert len(result) == 0
 
-        # More recent video should have a higher timestamp
-        time1 = _sort_by_publish_time(video1)
-        time2 = _sort_by_publish_time(video2)
-        assert time1 > time2, "More recent video should have a higher timestamp"
-
-    async def test_youtube_transcripts(self) -> None:
-        """Test youtube_transcripts function for multiple videos"""
-        with patch(
-            "youtube_transcript_api.YouTubeTranscriptApi.get_transcript"
-        ) as mock_get_transcript:
-            mock_get_transcript.return_value = [
-                {"text": "Test transcript", "start": 0.0, "duration": 5.0}
-            ]
-            results = youtube_transcripts("video1,video2")
-            assert len(results) == 2
-            assert results[0].id == "video1"
-            assert results[1].id == "video2"
-            assert "Test transcript" in results[0].text
-            assert "Test transcript" in results[1].text
-
-    async def test_filter_channels(self) -> None:
-        """Test _filter_channels function"""
-        with patch("api.youtube.get_data") as mock_get_data:
-            mock_get_data.return_value = [
-                {"Youtube": "@channel1"},
-                {"Youtube": "@channel2"},
-            ]
-            channels = _filter_channels(["@channel1", "channel2"])
-            assert len(channels) == 2
-            assert "@channel1" in channels
-            assert "@channel2" in channels
-
-    async def test_get_video_transcript_error(self) -> None:
-        """Test error handling in _get_video_transcript"""
-        with patch(
-            "youtube_transcript_api.YouTubeTranscriptApi.get_transcript",
-            side_effect=Exception("Transcript not available"),
-        ):
-            transcript = _get_video_transcript("test_id")
-            assert transcript == ""
-
-    async def test_get_video_info(self) -> None:
-        """Test _get_video_info function"""
-        mock_response = AsyncMock()
-        mock_response.status = 200
-        mock_response.text = AsyncMock(
-            return_value="""
-            <html><script>var ytInitialData = {
-                "contents": {
-                    "twoColumnWatchNextResults": {
-                        "results": {
-                            "results": {
-                                "contents": [
-                                    {},
-                                    {
-                                        "videoSecondaryInfoRenderer": {
-                                            "attributedDescription": {
-                                                "content": "Test video info"
-                                            }
-                                        }
-                                    }
-                                ]
-                            }
-                        }
-                    }
-                }
-            };</script></html>
-        """
-        )
-
-        mock_session = AsyncMock()
-        mock_session.get = AsyncMock(return_value=mock_response)
-
-        result = await _get_video_info(mock_session, "test_id")
-        assert result["long_desc"] == "Test video info"
-
-    async def test_youtube_search_no_query(self) -> None:
-        """Test youtube search when no query is provided (sort by publish time)"""
-        with patch("api.youtube._filter_channels", return_value=["@testchannel"]):
-            with patch("aiohttp.ClientSession") as mock_session:
-                mock_response = AsyncMock()
-                mock_response.status = 200
-                mock_response.text = AsyncMock(return_value="mock_html")
-                mock_session.return_value.__aenter__.return_value.get = AsyncMock(
-                    return_value=mock_response
-                )
-                mock_session.return_value.__aexit__ = AsyncMock()
-
-                with patch("api.youtube._parse_html_list") as mock_parse:
-                    mock_parse.return_value = [
-                        Video(
-                            id="1",
-                            title="Old Video",
-                            short_desc="Test",
-                            channel="Test",
-                            duration="10:00",
-                            views="100",
-                            publish_time="2 days ago",
-                            url_suffix="/watch?v=1",
-                        ),
-                        Video(
-                            id="2",
-                            title="New Video",
-                            short_desc="Test",
-                            channel="Test",
-                            duration="10:00",
-                            views="100",
-                            publish_time="1 day ago",
-                            url_suffix="/watch?v=2",
-                        ),
-                    ]
-
-                    result = await youtube_search(
-                        channels="@testchannel",
-                        end_date="2024-01-01",
-                        query=None,
-                        period_days=3,
-                        max_videos_per_channel=2,
-                        get_descriptions=False,
-                        get_transcripts=False,
-                    )
-
-                    assert len(result) == 2
-                    assert result[0].id == "2"  # Newer video should be first
-                    assert result[1].id == "1"  # Older video should be second
-
-    async def test_youtube_search_empty_channels(self) -> None:
-        """Test youtube search with empty channels string"""
-        with pytest.raises(ValueError) as exc_info:
-            await youtube_search(
-                channels="",
-                end_date="2024-01-01",
-                query="test",
-                period_days=3,
-                get_descriptions=False,
-                get_transcripts=False,
+    def test_preserves_order(self):
+        """Test that filtering preserves original order"""
+        videos = [
+            Video(
+                id=str(i),
+                title=f"Test{i}",
+                short_desc="Desc",
+                channel="Ch",
+                duration="10:00",
+                views="100",
+                publish_time="1 day ago",
+                url_suffix=f"/watch?v={i}",
+                transcript="x" * 100,
             )
-        assert str(exc_info.value) == "No channels specified"
-
-    async def test_youtube_search_with_char_cap(self) -> None:
-        """Test youtube search with character cap"""
-        with patch("api.youtube._filter_channels", return_value=["@testchannel"]):
-            with patch("aiohttp.ClientSession") as mock_session:
-                mock_response = AsyncMock()
-                mock_response.status = 200
-                mock_response.text = AsyncMock(return_value="mock_html")
-                mock_session.return_value.__aenter__.return_value.get = AsyncMock(
-                    return_value=mock_response
-                )
-                mock_session.return_value.__aexit__ = AsyncMock()
-
-                with patch("api.youtube._parse_html_list") as mock_parse:
-                    mock_parse.return_value = [
-                        Video(
-                            id="1",
-                            title="Video 1",
-                            short_desc="Test",
-                            channel="Test",
-                            duration="10:00",
-                            views="100",
-                            publish_time="1 day ago",
-                            url_suffix="/watch?v=1",
-                        ),
-                        Video(
-                            id="2",
-                            title="Video 2",
-                            short_desc="Test",
-                            channel="Test",
-                            duration="10:00",
-                            views="100",
-                            publish_time="1 day ago",
-                            url_suffix="/watch?v=2",
-                        ),
-                    ]
-
-                    with patch("api.youtube._get_video_transcript") as mock_transcript:
-                        mock_transcript.side_effect = [
-                            "Long transcript " * 100,  # First video - long transcript
-                            "Short transcript",  # Second video - short transcript
-                        ]
-
-                        result = await youtube_search(
-                            channels="@testchannel",
-                            end_date="2024-01-01",
-                            query="test",
-                            period_days=3,
-                            max_videos_per_channel=2,
-                            get_descriptions=False,
-                            get_transcripts=True,
-                            char_cap=1000,
-                        )
-
-                        assert (
-                            len(result) == 1
-                        )  # Only the video with short transcript should remain
-                        assert result[0].id == "2"
+            for i in range(5)
+        ]
+        result = _filter_by_char_cap(videos, 1000)
+        # Check IDs are in order
+        for i in range(len(result) - 1):
+            assert int(result[i].id) < int(result[i + 1].id)

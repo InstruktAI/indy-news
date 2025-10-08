@@ -3,7 +3,6 @@ import logging
 import os
 from datetime import datetime
 from http.cookies import SimpleCookie
-from typing import Dict, List, Optional
 
 import dotenv
 from fastapi import HTTPException
@@ -20,13 +19,24 @@ logger = logging.getLogger(__name__)
 
 dotenv.load_dotenv()
 
-# client = GuestClient()
-client = Client(
-    "en-US",
-    user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36",
-)
+# check if we have cookies in env and save to file if not already there
+if not os.getenv("SVC_COOKIES"):
+    msg = "SVC_COOKIES environment variable not set, cannot authenticate"
+    raise ValueError(msg)
+cookies_raw = os.getenv("SVC_COOKIES")
+cache_dir = os.getenv("CACHE", "cache")
+cookies_file: str = os.path.join(cache_dir, "cookies.txt")
+if not os.path.exists(cookies_file):
+    os.makedirs(cache_dir, exist_ok=True)
+    with open(cookies_file, "w", encoding="utf-8") as f:
+        f.write(cookies_raw)
 
-cookies_file: str = os.path.join(os.getenv("CACHE") or "", "cookies.json")
+client = Client(
+    user_agent=(
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+    ),
+)
 
 
 class User(BaseModel, TwikitUser):
@@ -44,51 +54,26 @@ class Tweet(BaseModel, TwikitTweet):
     # The language of the tweet.
     lang: str
     # Hashtags included in the tweet text.
-    hashtags: List[str]
+    hashtags: list[str]
     # User that created the tweet.
     user: User
 
 
 async def _get_client() -> Client:
-    # if exists, load cookies from file
-    if client._user_id is not None:
-        return client
-    if os.getenv("X_COOKIES"):
-        logger.info("Using cookies from environment variable X_COOKIES")
-        cookies_raw = os.getenv("X_COOKIES")
-        cookie = SimpleCookie()
-        cookie.load(cookies_raw)
-        cookies = {k: v.value for k, v in cookie.items()}
-        client.set_cookies(cookies)
-        return client
-    if os.path.exists(cookies_file):
-        logger.info(f"Loading cookies from file: {cookies_file}")
-        client.load_cookies(cookies_file)
-        return client
-    # otherwise, login
-    logger.info("No cookies found, logging in with credentials")
-    await client.login(
-        auth_info_1=os.getenv("X_USER"),
-        auth_info_2=os.getenv("X_EMAIL"),
-        password=os.getenv("X_PASSWORD"),
-    )
-    # and save cookies to file
-    client.save_cookies(cookies_file)
+    with open(cookies_file, encoding="utf-8") as cookie_file:
+        cookies_str = cookie_file.read()
+    cookie = SimpleCookie()
+    cookie.load(cookies_str)
+    cookies = {k: v.value for k, v in cookie.items()}
+    client.set_cookies(cookies)
     return client
 
 
-# cache results for one hour
-@async_threadsafe_ttl_cache(ttl=3600)
-async def x_search(
-    users: Optional[str],
-    query: Optional[str] = None,
-    period_days: int = 3,
-    end_date: Optional[str] = None,
-    max_tweets_per_user: int = 20,
-) -> List[Tweet]:
-    """Search for tweets from specific users or matching a query"""
-    # Validate parameters
-    if users == "":  # Empty string should be treated as None
+def _validate_x_search_params(
+    users: str | None, query: str | None, period_days: int, end_date: str | None
+) -> str | None:
+    """Validate x_search parameters."""
+    if users == "":
         users = None
     if not users and not query:
         raise ValueError("Either users or query must be provided")
@@ -96,73 +81,91 @@ async def x_search(
         raise ValueError("period_days must be 1 or more")
     if end_date:
         try:
-            date = datetime.strptime(end_date, "%Y-%m-%d")
+            datetime.strptime(end_date, "%Y-%m-%d")
         except ValueError as e:
             if "does not match format" in str(e):
-                raise ValueError("end_date must be in YYYY-MM-DD format")
-            raise e
+                raise ValueError("end_date must be in YYYY-MM-DD format") from e
+            raise
+    return users
 
-    logger.debug(
-        f"Searching for tweets with users: {users}, query: {query}, period_days: {period_days}, end_date: {end_date}, max_tweets_per_user: {max_tweets_per_user}"
-    )
-    # Process users if provided
-    users_arr = []
-    if users:
-        users_arr = [f"from:{user}" for user in _filter_users(users.lower().split(","))]
 
-    # Build search query
+def _build_x_search_query(
+    users_arr: list[str], query: str | None, period_days: int, end_date: str | None
+) -> str:
+    """Build the X search query string."""
     query_str = f" {query}" if query else ""
     [year, month, day] = get_since_date(period_days, end_date)
     since = f"since:{year}-{month}-{day} "
     until = f"until:{end_date}" if end_date else ""
     users_str = " (" + " OR ".join(users_arr) + ")" if len(users_arr) > 0 else ""
-    search = f"{since}{until}{users_str}{query_str}".strip()
+    return f"{since}{until}{users_str}{query_str}".strip()
 
-    # Set tweet count based on number of users
+
+async def _fetch_tweets(search: str, count: int) -> list[Tweet]:
+    """Fetch tweets using the X API client."""
+    tweets: list[Tweet] = []
+    x_client = await _get_client()
+    _tweets = await x_client.search_tweet(query=search, product="Latest", count=count)
+    tweets.extend(_tweets)
+    while (len(_tweets) == 20) and len(tweets) < count:
+        _tweets = await _tweets.next()
+        tweets.extend(_tweets)
+        await asyncio.sleep(1)
+    return tweets
+
+
+# cache results for one hour
+@async_threadsafe_ttl_cache(ttl=3600)
+async def x_search(
+    users: str | None,
+    query: str | None = None,
+    period_days: int = 3,
+    end_date: str | None = None,
+    max_tweets_per_user: int = 20,
+) -> list[Tweet]:
+    """Search for tweets from specific users or matching a query."""
+    users = _validate_x_search_params(users, query, period_days, end_date)
+
+    logger.debug(
+        f"Searching for tweets with users: {users}, query: {query}, "
+        f"period_days: {period_days}, end_date: {end_date}, max_tweets_per_user: {max_tweets_per_user}"
+    )
+
+    users_arr = (
+        [f"from:{user}" for user in _filter_users(users.lower().split(","))]
+        if users
+        else []
+    )
+    search = _build_x_search_query(users_arr, query, period_days, end_date)
     count = len(users_arr) * max_tweets_per_user if users_arr else max_tweets_per_user
 
-    tweets: List[Tweet] = []
     try:
-        client = await _get_client()
-        _tweets = await client.search_tweet(
-            query=search,
-            product="Latest",
-            count=count,
-        )
-        tweets.extend(_tweets)
-        while (len(_tweets) == 20) and len(tweets) < count:
-            _tweets = await _tweets.next()
-            tweets.extend(_tweets)
-            await asyncio.sleep(1)
-        print("Number of tweets found: " + str(len(tweets)))
+        tweets = await _fetch_tweets(search, count)
         return _max_per_user(tweets, max_tweets_per_user)
-    except Exception as e:
-        if isinstance(e, HTTPException):
-            # raise e
-            logger.error(e)
-        else:
-            err = HTTPException(
-                status_code=500, detail=f"Failed to fetch tweets: {str(e)}"
-            )
-            # raise err
-            logger.error(err)
+    except HTTPException as e:
+        logger.exception(e)
+        return []
+    except (ConnectionError, TimeoutError, ValueError) as e:
+        logger.exception(
+            HTTPException(status_code=500, detail=f"Failed to fetch tweets: {e!s}")
+        )
         return []
 
 
-def _max_per_user(tweets: List[Tweet], max_tweets_per_user: int = 10) -> List[Tweet]:
-    ret: Dict[int, List[Tweet]] = {}
+def _max_per_user(tweets: list[Tweet], max_tweets_per_user: int = 10) -> list[Tweet]:
+    ret: dict[int, list[Tweet]] = {}
     for tweet in tweets:
-        if not tweet.user.id in ret:
+        if tweet.user.id not in ret:
             ret[tweet.user.id] = []
         if len(ret[tweet.user.id]) >= max_tweets_per_user:
-            break
+            continue
         ret[tweet.user.id].append(tweet)
     # flatten the dict
     return [tweet for tweets in ret.values() for tweet in tweets]
 
 
-def _filter_users(users: List[str]) -> List[str]:
-    """Only allow users in our data store"""
+def _filter_users(users: list[str]) -> list[str]:
+    """Only allow users in our data store."""
     data = get_data()
     fixed_users = []
     for user in users:

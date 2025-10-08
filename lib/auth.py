@@ -5,7 +5,9 @@ from fastapi.security import APIKeyHeader, APIKeyQuery, HTTPBearer
 
 query_scheme = APIKeyQuery(name="apikey", scheme_name="APIKeyQuery", auto_error=False)
 header_scheme = APIKeyHeader(
-    name="X-API-KEY", scheme_name="APIKeyHeader", auto_error=False
+    name="X-API-KEY",
+    scheme_name="APIKeyHeader",
+    auto_error=False,
 )
 bearer_scheme = HTTPBearer(scheme_name="HTTPBearer", auto_error=False)
 

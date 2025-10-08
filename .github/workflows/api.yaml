@@ -27,7 +27,7 @@ env:
 jobs:
   api:
     timeout-minutes: 15
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, ARM64]
     steps:
       - name: Set env
         # we keep the tag for the cache registry
@@ -66,7 +66,7 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: .
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/arm64
           push: true
           tags: |
             ${{ steps.meta.outputs.tags }}

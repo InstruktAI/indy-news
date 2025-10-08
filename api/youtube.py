@@ -3,8 +3,9 @@ import json
 import logging
 import time
 import urllib.parse
+from collections.abc import Coroutine
 from datetime import datetime
-from typing import Dict, List, Optional, Union
+from typing import Any
 
 import dateparser
 from aiohttp import ClientSession
@@ -15,13 +16,14 @@ from youtube_transcript_api import YouTubeTranscriptApi
 
 from api.store import get_data
 from lib.cache import async_threadsafe_ttl_cache
+from lib.cache import sync_threadsafe_ttl_cache as cache
 from lib.utils import get_since_date
 
 logger = logging.getLogger(__name__)
 
 
 class Transcript(BaseModel):
-    """Transcript model"""
+    """Transcript model."""
 
     text: str
     start: int
@@ -29,14 +31,14 @@ class Transcript(BaseModel):
 
 
 class VideoTranscript(BaseModel):
-    """Video transcript model"""
+    """Video transcript model."""
 
     id: str
     text: str
 
 
 class Video(BaseModel):
-    """Video model"""
+    """Video model."""
 
     id: str
     # thumbnails: List[str]
@@ -47,23 +49,23 @@ class Video(BaseModel):
     views: str
     publish_time: str
     url_suffix: str
-    long_desc: Optional[str] = None
-    transcript: Optional[str] = None
+    long_desc: str | None = None
+    transcript: str | None = None
 
 
-def _parse_html_list(html: str, max_results: int) -> List[Video]:
-    results: List[Video] = []
-    if not "ytInitialData" in html:
+def _parse_html_list(html: str, max_results: int) -> list[Video]:
+    results: list[Video] = []
+    if "ytInitialData" not in html:
         return []
     start = html.index("ytInitialData") + len("ytInitialData") + 3
     end = html.index("};", start) + 1
     json_str = html[start:end]
     data = json.loads(json_str)
-    if not "twoColumnBrowseResultsRenderer" in data["contents"]:
+    if "twoColumnBrowseResultsRenderer" not in data["contents"]:
         return []
     tab = None
     for tab in data["contents"]["twoColumnBrowseResultsRenderer"]["tabs"]:
-        if "expandableTabRenderer" in tab.keys():
+        if "expandableTabRenderer" in tab:
             break
     if tab is None:
         return []
@@ -72,10 +74,10 @@ def _parse_html_list(html: str, max_results: int) -> List[Video]:
     ]:
         if "itemSectionRenderer" in contents:
             for video in contents["itemSectionRenderer"]["contents"]:
-                if not "videoRenderer" in video.keys():
+                if "videoRenderer" not in video:
                     continue
 
-                res: Dict[str, Union[str, List[str], int, None]] = {}
+                res: dict[str, str | list[str] | int | None] = {}
                 video_data = video.get("videoRenderer", {})
                 res["id"] = video_data.get("videoId", None)
                 # res["thumbnails"] = [
@@ -98,7 +100,8 @@ def _parse_html_list(html: str, max_results: int) -> List[Video]:
                 res["duration"] = video_data.get("lengthText", {}).get("simpleText", "")
                 res["views"] = video_data.get("viewCountText", {}).get("simpleText", "")
                 res["publish_time"] = video_data.get("publishedTimeText", {}).get(
-                    "simpleText", ""
+                    "simpleText",
+                    "",
                 )
                 res["url_suffix"] = (
                     video_data.get("navigationEndpoint", {})
@@ -115,8 +118,8 @@ def _parse_html_list(html: str, max_results: int) -> List[Video]:
     return results
 
 
-def _parse_html_video(html: str) -> Dict[str, str]:
-    result: Dict[str, str] = {"long_desc": None}
+def _parse_html_video(html: str) -> dict[str, str]:
+    result: dict[str, str] = {"long_desc": None}
     start = html.index("ytInitialData") + len("ytInitialData") + 3
     end = html.index("};", start) + 1
     json_str = html[start:end]
@@ -128,43 +131,32 @@ def _parse_html_video(html: str) -> Dict[str, str]:
                 1
             ].videoSecondaryInfoRenderer.attributedDescription.content
         )
-    except:
-        pass
+    except (AttributeError, KeyError, IndexError, TypeError):
+        logger.warning(
+            "YouTube HTML structure changed, could not extract long description"
+        )
     return result
 
 
-# cache results for one hour
-@async_threadsafe_ttl_cache(ttl=3600)
-async def youtube_search(
-    channels: str,
-    end_date: str,
-    query: Optional[str] = None,
-    period_days: int = 3,
-    max_videos_per_channel: int = 3,
-    get_descriptions: bool = False,
-    get_transcripts: bool = True,
-    char_cap: Optional[int] = None,
-) -> List[Video]:
-    if not channels:
-        raise ValueError("No channels specified")
-
-    channels_arr = _filter_channels(
-        ["@" + channel.replace("@", "") for channel in channels.lower().split(",")]
-    )
+def _build_youtube_search_url(
+    query: str | None, period_days: int, end_date: str
+) -> str:
+    """Build YouTube search query URL."""
     [year, month, day] = get_since_date(period_days, end_date)
     query_str = f"{query} " if query else ""
-    before = f'{" " if query else ""}before:{end_date} ' if end_date else ""
-    encoded_search = urllib.parse.quote_plus(
-        f"{query_str}{before}after:{year}-{month}-{day}"
-    )
+    before = f"{' ' if query else ''}before:{end_date} " if end_date else ""
+    return urllib.parse.quote_plus(f"{query_str}{before}after:{year}-{month}-{day}")
+
+
+def _create_channel_tasks(
+    channels_arr: list[str],
+    encoded_search: str,
+    max_videos_per_channel: int,
+    get_descriptions: bool,
+    get_transcripts: bool,
+) -> list[Coroutine[Any, Any, list[Video]]]:
+    """Create async tasks for fetching videos from each channel."""
     tasks = []
-    if len(channels_arr) == 0:
-        return []
-
-    logger.debug(
-        f"Searching for videos on channels: {channels_arr}, query: {query}, period_days: {period_days}, end_date: {end_date}, max_videos_per_channel: {max_videos_per_channel}, get_descriptions: {get_descriptions}, get_transcripts: {get_transcripts}, char_cap: {char_cap}"
-    )
-
     for channel in channels_arr:
         if channel == "n/a":
             continue
@@ -178,29 +170,76 @@ async def youtube_search(
                 get_transcripts=get_transcripts,
             )
         )
-    try:
-        results = await asyncio.gather(*tasks)
-    except HTTPException as e:
-        logger.error(e)
-        raise e
-    except Exception as e:
-        logger.error(e)
-        raise e
+    return tasks
 
-    res: List[Video] = []
+
+def _process_video_results(
+    results: list[list[Video]], query: str | None, char_cap: int | None
+) -> list[Video]:
+    """Process and sort video results."""
+    res: list[Video] = []
     for videos in results:
-        # a given query results in relevance sort, which is nice, but if no query was given we sort by publish time
         if not query:
             videos.sort(key=_sort_by_publish_time)
             videos = videos[::-1]
         res.extend(videos)
-    print("Number of videos found: " + str(len(res)))
     if char_cap:
         res = _filter_by_char_cap(res, char_cap)
     return res
 
 
-def _filter_by_char_cap(videos: List[Video], char_cap: int) -> List[Video]:
+# cache results for one hour
+@async_threadsafe_ttl_cache(ttl=3600)
+async def youtube_search(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+    channels: str,
+    end_date: str,
+    query: str | None = None,
+    period_days: int = 3,
+    max_videos_per_channel: int = 3,
+    get_descriptions: bool = False,
+    get_transcripts: bool = True,
+    char_cap: int | None = None,
+) -> list[Video]:
+    if not channels:
+        raise ValueError("No channels specified")
+
+    channels_arr = _filter_channels(
+        ["@" + channel.replace("@", "") for channel in channels.lower().split(",")]
+    )
+    if len(channels_arr) == 0:
+        return []
+
+    logger.debug(
+        f"Searching for videos on channels: {channels_arr}, query: {query}, "
+        f"period_days: {period_days}, end_date: {end_date}, "
+        f"max_videos_per_channel: {max_videos_per_channel}, "
+        f"get_descriptions: {get_descriptions}, get_transcripts: {get_transcripts}, char_cap: {char_cap}"
+    )
+
+    encoded_search = _build_youtube_search_url(query, period_days, end_date)
+    tasks = _create_channel_tasks(
+        channels_arr,
+        encoded_search,
+        max_videos_per_channel,
+        get_descriptions,
+        get_transcripts,
+    )
+
+    try:
+        results = await asyncio.gather(*tasks)
+    except HTTPException as e:
+        logger.exception(e)
+        raise
+    except Exception as e:
+        logger.exception(e)
+        raise
+
+    return _process_video_results(results, query, char_cap)
+
+
+def _filter_by_char_cap(videos: list[Video], char_cap: int) -> list[Video]:
+    if char_cap is None:
+        return videos
     while len(json.dumps([vid.model_dump_json() for vid in videos])) > char_cap:
         transcript_lengths = [len(video.transcript) for video in videos]
         max_index = transcript_lengths.index(max(transcript_lengths))
@@ -211,27 +250,25 @@ def _filter_by_char_cap(videos: List[Video], char_cap: int) -> List[Video]:
 def _sort_by_publish_time(video: Video) -> float:
     now = datetime.now()
     d = dateparser.parse(
-        video.publish_time.replace("Streamed ", ""), settings={"RELATIVE_BASE": now}
+        video.publish_time.replace("Streamed ", ""),
+        settings={"RELATIVE_BASE": now},
     )
     return time.mktime(d.timetuple())
 
 
-# @cache(ttl=3600)
+@cache(ttl=3600)
 def youtube_transcripts(
     ids: str,
-) -> List[VideoTranscript]:
-    """
-    Extract transcripts from a list of Youtube video ids
-    """
-
-    results: List[VideoTranscript] = []
+) -> list[VideoTranscript]:
+    """Extract transcripts from a list of Youtube video ids."""
+    results: list[VideoTranscript] = []
     for video_id in ids.split(","):
         transcript = _get_video_transcript(video_id)
         results.append(VideoTranscript(id=video_id, text=transcript))
     return results
 
 
-def _filter_channels(channels: List[str]) -> List[str]:
+def _filter_channels(channels: list[str]) -> list[str]:
     data = get_data()
     fixed_channels = []
     for channel_raw in channels:
@@ -249,12 +286,13 @@ async def _get_channel_videos(
     max_videos_per_channel: int,
     get_descriptions: bool,
     get_transcripts: bool,
-) -> List[Video]:
+) -> list[Video]:
     # cookie to bypass consent, as found here:
     # https://stackoverflow.com/questions/74127649/is-there-a-way-to-skip-youtubes-before-you-continue-to-youtube-cookies-messag
     async with ClientSession() as session:
         response = await session.get(
-            url, headers={"Cookie": "SOCS=CAESEwgDEgk0ODE3Nzk3MjQaAmVuIAEaBgiA_LyaBg"}
+            url,
+            headers={"Cookie": "SOCS=CAESEwgDEgk0ODE3Nzk3MjQaAmVuIAEaBgiA_LyaBg"},
         )
         if response.status != 200:
             raise HTTPException(
@@ -273,30 +311,29 @@ async def _get_channel_videos(
         return videos
 
 
-async def _get_video_info(session: ClientSession, video_id: str) -> Dict[str, str]:
+async def _get_video_info(session: ClientSession, video_id: str) -> dict[str, str]:
     url = f"https://www.youtube.com/watch?v={video_id}"
     response = await session.get(
-        url, headers={"Cookie": "SOCS=CAESEwgDEgk0ODE3Nzk3MjQaAmVuIAEaBgiA_LyaBg"}
+        url,
+        headers={"Cookie": "SOCS=CAESEwgDEgk0ODE3Nzk3MjQaAmVuIAEaBgiA_LyaBg"},
     )
     html = await response.text()
-    result = _parse_html_video(html)
-    return result
+    return _parse_html_video(html)
 
 
 def _get_video_transcript(video_id: str, strip_timestamps: bool = False) -> str:
     ytt_api = YouTubeTranscriptApi()
     try:
         transcripts = ytt_api.fetch(video_id, preserve_formatting=True)
-        transcript = " ".join(
+        return " ".join(
             [
                 (
-                    "[" + str(t["start"]).split(".")[0] + "s] " + t["text"]
+                    "[" + str(t["start"]).split(".", maxsplit=1)[0] + "s] " + t["text"]
                     if not strip_timestamps
                     else t["text"]
                 )
                 for t in transcripts.to_raw_data()
-            ]
+            ],
         )
-        return transcript
-    except Exception as e:
+    except (KeyError, AttributeError, ValueError, ConnectionError, TimeoutError):
         return ""

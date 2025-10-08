@@ -3,7 +3,7 @@ import streamlit.components.v1 as components
 
 from api.main import get_source_names, search_media
 
-with open("index.html", "r") as f:
+with open("index.html", encoding="utf-8") as f:
     html_code = f.read()
     components.html(html_code, height=0)
 
@@ -12,7 +12,7 @@ st.title("Search media outlets")
 st.markdown(
     """
 ## Search for relevant independent media outlets
-"""
+""",
 )
 sources = st.multiselect(
     "Select one or more names of sources...",

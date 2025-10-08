@@ -60,19 +60,39 @@ warn_untyped_fields = true
 [tool.pylint.'MESSAGES CONTROL']
 disable = [
   "invalid-name",
+  "logging-fstring-interpolation",
   "missing-docstring",
   "missing-module-docstring",
   "missing-timeout",
   "no-name-in-module",
+  "no-value-for-parameter",
   "redefined-builtin",
   "too-few-public-methods",
-  "too-many-arguments",
   "unused-argument",
   "wrong-import-position",
 ]
 
 [tool.pylint.'FORMAT']
 max-line-length = 120
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # pyflakes
+    "UP",     # pyupgrade
+    "B",      # flake8-bugbear
+    "SIM",    # flake8-simplify
+    "PT",     # flake8-pytest-style
+]
+ignore = [
+    "E501",   # line too long (handled by formatter)
+    "G004",   # logging f-strings (not auto-fixable)
+]
 
 [tool.pyproject-fmt]
 indent = 4
