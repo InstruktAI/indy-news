@@ -9,10 +9,8 @@ on:
       - .github/**
       - 'api/**'
       - 'data/**'
-      - 'db/**'
       - 'lib/**'
       - 'Dockerfile'
-      - 'Home.py'
       - 'requirements.txt'
 
 env:
@@ -22,7 +20,7 @@ env:
   IMAGE_NAME: morriz/indy-news
 
 jobs:
-  api:
+  app:
     timeout-minutes: 15
     runs-on: [self-hosted, linux, ARM64]
     steps:

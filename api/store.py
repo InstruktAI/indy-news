@@ -31,6 +31,7 @@ class SourceMinimal(BaseModel):
     """Source model."""
 
     Name: str
+    Media: str
     About: str
     Topics: str
 

@@ -59,9 +59,17 @@ def get_all_sources(
     data = get_data()
     sources: list[SourceMinimal] = []
     for _i, item in enumerate(data):
+        media = []
+        if item["Youtube"] != "n/a":
+            media.append("Youtube")
+        if item["X"] != "n/a":
+            media.append("X")
+        if item["Substack"] != "n/a":
+            media.append("Substack")
         sources.append(
             SourceMinimal(
                 Name=item["Name"],
+                Media=",".join(media),
                 About=item["About"],
                 Topics=item["Topics"],
             ),

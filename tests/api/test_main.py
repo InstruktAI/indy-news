@@ -79,7 +79,7 @@ class TestDataEndpoints:
             data = response.json()
             assert len(data) == 2
             # Verify only minimal fields returned
-            assert set(data[0].keys()) == {"Name", "About", "Topics"}
+            assert set(data[0].keys()) == {"Name", "Media", "About", "Topics"}
             assert data[0]["Name"] == "Al Jazeera"
 
     def test_source_media_filters_na_values(
@@ -121,9 +121,7 @@ class TestContentEndpointValidation:
         assert response.status_code == 400
         assert "Either one of" in response.json()["detail"]
 
-    def test_x_requires_query_or_users(
-        self, client: TestClient, api_key: str
-    ) -> None:
+    def test_x_requires_query_or_users(self, client: TestClient, api_key: str) -> None:
         """Test /x rejects requests with neither query nor users"""
         response = client.get(f"/x?apikey={api_key}")
         assert response.status_code == 400
