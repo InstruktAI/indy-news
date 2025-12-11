@@ -1,4 +1,4 @@
-name: build app
+name: Build
 
 on:
   push:
@@ -12,11 +12,13 @@ on:
       - 'lib/**'
       - 'Dockerfile'
       - 'requirements.txt'
+  pull_request:
+    branches:
+      - main
 
 env:
   REGISTRY: docker.io
   REGISTRY_USER: morriz
-  REGISTRY_PASS: ${{ secrets.DOCKER_TOKEN }}
   IMAGE_NAME: morriz/indy-news
 
 jobs:
@@ -24,33 +26,23 @@ jobs:
     timeout-minutes: 15
     runs-on: [self-hosted, linux, ARM64]
     steps:
-      - name: Set env
-        # we keep the tag for the cache registry
-        run: |
-          tag=${GITHUB_REF##*/}
-          echo "Creating tag: $tag"
-          echo "TAG=$tag" >> $GITHUB_ENV
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Log in to the registry
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ env.REGISTRY_USER }}
-          password: ${{ env.REGISTRY_PASS }}
-      - name: Pull the previous image as cache
-        run: docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.TAG }} || true
+          password: ${{ secrets.DOCKER_TOKEN }}
       - name: Extract metadata (tags, labels)
         id: meta
-        uses: docker/metadata-action@v4
+        uses: docker/metadata-action@v5
         with:
           images: ${{ env.IMAGE_NAME }}
-          # generate Docker tags based on the following events/attributes
-          tags: |
-            type=ref,event=branch
       - name: Build and push image to registry
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v6
         with:
           context: .
-          push: true
+          network: host
+          push: ${{ github.event_name == 'push' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

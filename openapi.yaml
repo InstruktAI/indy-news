@@ -6,34 +6,21 @@ paths:
   /media:
     get:
       summary: Search Media
-      description: Search the curated independent media sources database for a partial
-        name
+      description:
+        Search the curated independent media sources database for a partial
+        name.
       operationId: search_media_media_get
       security:
-      - APIKeyQuery: []
-      - APIKeyHeader: []
-      - HTTPBearer: []
+        - APIKeyQuery: []
+        - APIKeyHeader: []
+        - HTTPBearer: []
       parameters:
-      - name: query
-        in: query
-        required: true
-        schema:
-          type: string
-          title: Query
-      - name: limit
-        in: query
-        required: false
-        schema:
-          type: integer
-          default: 5
-          title: Limit
-      - name: offset
-        in: query
-        required: false
-        schema:
-          type: integer
-          default: 0
-          title: Offset
+        - name: names
+          in: query
+          required: true
+          schema:
+            type: string
+            title: Names
       responses:
         '200':
           description: Successful Response
@@ -42,7 +29,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Media'
+                  $ref: '#/components/schemas/Source'
                 title: Response Search Media Media Get
         '422':
           description: Validation Error
@@ -53,10 +40,70 @@ paths:
   /sources:
     get:
       summary: Get All Sources
-      description: Returns a list of all sources' names. Used as input for AI to determine
-        which sources to select for certain topics (it knows these names and what
-        topics those sources report on).
+      description: 'Returns a list of all sources.
+
+
+        Used as input for AI to determine which sources to select for certain topics.'
       operationId: get_all_sources_sources_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/SourceMinimal'
+                type: array
+                title: Response Get All Sources Sources Get
+      security:
+        - APIKeyQuery: []
+        - APIKeyHeader: []
+        - HTTPBearer: []
+  /source-media:
+    get:
+      summary: Get Source Media
+      description:
+        Returns a list of sources' Youtube channel and X handles. Used
+        as input for AI to query for videos and tweets.
+      operationId: get_source_media_source_media_get
+      security:
+        - APIKeyQuery: []
+        - APIKeyHeader: []
+        - HTTPBearer: []
+      parameters:
+        - name: sources
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+                minLength: 1
+              - type: 'null'
+            title: Comma separated list of source names
+            examples:
+              - Al Jazeera,Democracy Now
+          description: Source names to get Youtube channel and X handles for
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SourceMedia'
+                title: Response Get Source Media Source Media Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /source-names:
+    get:
+      summary: Get Source Names
+      description: Returns a list of source names.
+      operationId: get_source_names_source_names_get
       responses:
         '200':
           description: Successful Response
@@ -66,137 +113,155 @@ paths:
                 items:
                   type: string
                 type: array
-                title: Response Get All Sources Sources Get
+                title: Response Get Source Names Source Names Get
       security:
-      - APIKeyQuery: []
-      - APIKeyHeader: []
-      - HTTPBearer: []
-  /source-media:
+        - APIKeyQuery: []
+        - APIKeyHeader: []
+        - HTTPBearer: []
+  /youtube-channels:
     get:
-      summary: Get Source Media
-      description: Returns a list of sources' Youtube channel and X handles. Used
-        as input for AI to query for videos and tweets.
-      operationId: get_source_media_source_media_get
-      security:
-      - APIKeyQuery: []
-      - APIKeyHeader: []
-      - HTTPBearer: []
-      parameters:
-      - name: sources
-        in: query
-        required: false
-        schema:
-          type: string
-          minLength: 1
-          title: Comma separated list of source names
-          examples:
-          - Al Jazeera,Democracy Now
-        description: Comma separated list of source names to get Youtube channel and
-          X handles for
+      summary: Get Youtube Channels
+      description: Returns a list of sources' Youtube channels.
+      operationId: get_youtube_channels_youtube_channels_get
       responses:
         '200':
           description: Successful Response
           content:
             application/json:
               schema:
-                type: array
                 items:
-                  $ref: '#/components/schemas/MediaMinimal'
-                title: Response Get Source Media Source Media Get
-        '422':
-          description: Validation Error
+                  type: string
+                type: array
+                title: Response Get Youtube Channels Youtube Channels Get
+      security:
+        - APIKeyQuery: []
+        - APIKeyHeader: []
+        - HTTPBearer: []
+  /x-users:
+    get:
+      summary: Get X Users
+      description: Returns a list of sources' X user handles.
+      operationId: get_x_users_x_users_get
+      responses:
+        '200':
+          description: Successful Response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTPValidationError'
+                items:
+                  type: string
+                type: array
+                title: Response Get X Users X Users Get
+      security:
+        - APIKeyQuery: []
+        - APIKeyHeader: []
+        - HTTPBearer: []
+  /substack-publications:
+    get:
+      summary: Get Substack Publications
+      description: Returns a list of sources' Substack publication names.
+      operationId: get_substack_publications_substack_publications_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  type: string
+                type: array
+                title: Response Get Substack Publications Substack Publications Get
+      security:
+        - APIKeyQuery: []
+        - APIKeyHeader: []
+        - HTTPBearer: []
   /youtube:
     get:
       summary: Get Youtube Search
-      description: Find Youtube videos by either providing channels, a query, or both
+      description: Find Youtube videos by either providing channels, a query, or both.
       operationId: get_youtube_search_youtube_get
       security:
-      - APIKeyQuery: []
-      - APIKeyHeader: []
-      - HTTPBearer: []
+        - APIKeyQuery: []
+        - APIKeyHeader: []
+        - HTTPBearer: []
       parameters:
-      - name: query
-        in: query
-        required: false
-        schema:
-          type: string
-          minLength: 3
-          title: Query string
-          examples:
-          - israel
-        description: Query string used to match independent news channels and do a
-          youtube search with in those channels.
-      - name: channels
-        in: query
-        required: false
-        schema:
-          type: string
-          title: Channels to search in
-          examples:
-          - '@aljazeeraenglish,@DemocracyNow'
-        description: A string of comma-separated Youtube channels to search in.
-      - name: period_days
-        in: query
-        required: false
-        schema:
-          type: integer
-          title: Period in days
-          default: 3
-        description: The period in days before (now|end_date) that we want to search
-          videos for.
-      - name: end_date
-        in: query
-        required: false
-        schema:
-          type: string
-          title: End date
-        description: The end day in Y-m-d format. Subtracts the period_days to determine
-          the period that we want to search videos for.
-      - name: max_channels
-        in: query
-        required: false
-        schema:
-          type: integer
-          title: Max channels
-          default: 5
-        description: Maximum number of channels that we want to match. Needed when
-          no channels were provided.
-      - name: max_videos_per_channel
-        in: query
-        required: false
-        schema:
-          type: integer
-          title: Max videos per channel
-          default: 2
-        description: The maximum number of videos per channel that we want from each
-          channel search.
-      - name: get_descriptions
-        in: query
-        required: false
-        schema:
-          type: boolean
-          title: Get descriptions
-          default: false
-        description: Get the long descriptions for the videos.
-      - name: get_transcripts
-        in: query
-        required: false
-        schema:
-          type: boolean
-          title: Get transcripts
-          default: true
-        description: Get the transcripts for the videos.
-      - name: char_cap
-        in: query
-        required: false
-        schema:
-          type: integer
-          title: Max chars in the response
-        description: The maximum number of characters for the response.
+        - name: query
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+                minLength: 3
+              - type: 'null'
+            title: Query string
+            examples:
+              - israel
+          description: Search query to match independent news channels
+        - name: channels
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+              - type: 'null'
+            title: Channels to search in
+            examples:
+              - '@aljazeeraenglish,@DemocracyNow'
+          description: A string of comma-separated Youtube channels to search in.
+        - name: period_days
+          in: query
+          required: false
+          schema:
+            type: integer
+            title: Period in days
+            default: 3
+          description:
+            The period in days before (now|end_date) that we want to search
+            videos for.
+        - name: end_date
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+              - type: 'null'
+            title: End date
+          description: End date in Y-m-d format (subtracts period_days from this)
+        - name: max_videos_per_channel
+          in: query
+          required: false
+          schema:
+            type: integer
+            title: Max videos per channel
+            default: 2
+          description:
+            The maximum number of videos per channel that we want from each
+            channel search.
+        - name: get_descriptions
+          in: query
+          required: false
+          schema:
+            type: boolean
+            title: Get descriptions
+            default: false
+          description: Get the long descriptions for the videos.
+        - name: get_transcripts
+          in: query
+          required: false
+          schema:
+            type: boolean
+            title: Get transcripts
+            default: true
+          description: Get the transcripts for the videos.
+        - name: char_cap
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: integer
+              - type: 'null'
+            title: Max chars in the response
+          description: The maximum number of characters for the response.
       responses:
         '200':
           description: Successful Response
@@ -213,218 +278,22 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-  /x:
-    get:
-      summary: Get X Search
-      description: Find tweets on X by either providing users, a query, or both
-      operationId: get_x_search_x_get
-      security:
-      - APIKeyQuery: []
-      - APIKeyHeader: []
-      - HTTPBearer: []
-      parameters:
-      - name: query
-        in: query
-        required: false
-        schema:
-          type: string
-          minLength: 3
-          title: Query string
-          examples:
-          - israel
-        description: Query string used to match independent news users and do an X
-          tweet search.
-      - name: users
-        in: query
-        required: false
-        schema:
-          type: string
-          title: Users to search in
-          examples:
-          - AJenglish,democracynow
-        description: A string of comma-separated X users to search in.
-      - name: period_days
-        in: query
-        required: false
-        schema:
-          type: integer
-          title: Period in days
-          default: 3
-        description: The period in days since now that we want to search tweets for.
-      - name: end_date
-        in: query
-        required: false
-        schema:
-          type: string
-          title: End date
-        description: The end day in Y-m-d format. Subtracts the period_days to determine
-          the period that we want to search videos for.
-      - name: max_users
-        in: query
-        required: false
-        schema:
-          type: integer
-          title: Max users
-          default: 20
-        description: Maximum number of users that we want to match. Needed when no
-          users were provided.
-      - name: max_tweets_per_user
-        in: query
-        required: false
-        schema:
-          type: integer
-          title: Max tweets per user
-          default: 20
-        description: The maximum number of tweets per user that we want from the search.
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Tweet'
-                title: Response Get X Search X Get
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-  /news:
-    get:
-      summary: Get News Search
-      description: Find both Youtube videos and X tweets by either providing channels,
-        users, a query.
-      operationId: get_news_search_news_get
-      security:
-      - APIKeyQuery: []
-      - APIKeyHeader: []
-      - HTTPBearer: []
-      parameters:
-      - name: query
-        in: query
-        required: false
-        schema:
-          type: string
-          minLength: 3
-          title: Query string
-          examples:
-          - israel
-        description: Query string used to match independent news channels and do a
-          youtube search with in those channels.
-      - name: channels
-        in: query
-        required: false
-        schema:
-          type: string
-          title: Channels to search in
-          examples:
-          - '@aljazeeraenglish,@DemocracyNow'
-        description: A string of comma-separated Youtube channels to search in.
-      - name: users
-        in: query
-        required: false
-        schema:
-          type: string
-          title: Users to search in
-          examples:
-          - AJenglish,democracynow
-        description: A string of comma-separated X users to search in.
-      - name: period_days
-        in: query
-        required: false
-        schema:
-          type: integer
-          title: Period in days
-          default: 3
-        description: The period in days before (now|end_date) that we want to search
-          videos for.
-      - name: end_date
-        in: query
-        required: false
-        schema:
-          type: string
-          title: End date
-        description: The end day in Y-m-d format. Subtracts the period_days to determine
-          the period that we want to search videos for.
-      - name: max_channels
-        in: query
-        required: false
-        schema:
-          type: integer
-          title: Max channels
-          default: 5
-        description: Maximum number of channels that we want to match. Needed when
-          no channels were provided.
-      - name: max_users
-        in: query
-        required: false
-        schema:
-          type: integer
-          title: Max users
-          default: 20
-        description: Maximum number of users that we want to match. Needed when no
-          users were provided.
-      - name: max_videos_per_channel
-        in: query
-        required: false
-        schema:
-          type: integer
-          title: Max videos per channel
-          default: 2
-        description: The maximum number of videos per channel that we want from each
-          channel search.
-      - name: max_tweets_per_user
-        in: query
-        required: false
-        schema:
-          type: integer
-          title: Max tweets per user
-          default: 20
-        description: The maximum number of tweets per user that we want from the search.
-      - name: char_cap
-        in: query
-        required: false
-        schema:
-          type: integer
-          title: Max chars in the response
-        description: The maximum number of characters for the response.
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  anyOf:
-                  - $ref: '#/components/schemas/Video'
-                  - $ref: '#/components/schemas/Tweet'
-                title: Response Get News Search News Get
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
   /youtube-transcripts:
     get:
       summary: Get Youtube Transcripts
-      description: Extract transcripts from a list of Youtube video ids
+      description: Extract transcripts from a list of Youtube video ids.
       operationId: get_youtube_transcripts_youtube_transcripts_get
       security:
-      - APIKeyQuery: []
-      - APIKeyHeader: []
-      - HTTPBearer: []
+        - APIKeyQuery: []
+        - APIKeyHeader: []
+        - HTTPBearer: []
       parameters:
-      - name: ids
-        in: query
-        required: true
-        schema:
-          type: string
-          title: Ids
+        - name: ids
+          in: query
+          required: true
+          schema:
+            type: string
+            title: Ids
       responses:
         '200':
           description: Successful Response
@@ -441,18 +310,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-  /privacy:
-    get:
-      summary: Read Privacy
-      operationId: read_privacy_privacy_get
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                type: string
-                title: Response Read Privacy Privacy Get
 components:
   schemas:
     HTTPValidationError:
@@ -464,93 +321,6 @@ components:
           title: Detail
       type: object
       title: HTTPValidationError
-    Media:
-      properties:
-        Name:
-          type: string
-          title: Name
-        Website:
-          type: string
-          title: Website
-        Youtube:
-          type: string
-          title: Youtube
-        About:
-          type: string
-          title: About
-        TrustFactors:
-          type: string
-          title: Trustfactors
-        Topics:
-          type: string
-          title: Topics
-        Wikipedia:
-          type: string
-          title: Wikipedia
-        X:
-          type: string
-          title: X
-        Substack:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Substack
-      type: object
-      required:
-      - Name
-      - Website
-      - Youtube
-      - About
-      - TrustFactors
-      - Topics
-      - Wikipedia
-      - X
-      title: Media
-      description: Media model
-    MediaMinimal:
-      properties:
-        Name:
-          type: string
-          title: Name
-        Youtube:
-          type: string
-          title: Youtube
-        X:
-          type: string
-          title: X
-      type: object
-      required:
-      - Name
-      - Youtube
-      - X
-      title: MediaMinimal
-      description: Media minimal model
-    Tweet:
-      properties:
-        id:
-          type: integer
-          title: Id
-        text:
-          type: string
-          title: Text
-        lang:
-          type: string
-          title: Lang
-        hashtags:
-          items:
-            type: string
-          type: array
-          title: Hashtags
-        user:
-          $ref: '#/components/schemas/User'
-      type: object
-      required:
-      - id
-      - text
-      - lang
-      - hashtags
-      - user
-      title: Tweet
     User:
       properties:
         id:
@@ -561,16 +331,16 @@ components:
           title: Screen Name
       type: object
       required:
-      - id
-      - screen_name
+        - id
+        - screen_name
       title: User
     ValidationError:
       properties:
         loc:
           items:
             anyOf:
-            - type: string
-            - type: integer
+              - type: string
+              - type: integer
           type: array
           title: Location
         msg:
@@ -581,9 +351,9 @@ components:
           title: Error Type
       type: object
       required:
-      - loc
-      - msg
-      - type
+        - loc
+        - msg
+        - type
       title: ValidationError
     Video:
       properties:
@@ -613,26 +383,26 @@ components:
           title: Url Suffix
         long_desc:
           anyOf:
-          - type: string
-          - type: 'null'
+            - type: string
+            - type: 'null'
           title: Long Desc
         transcript:
           anyOf:
-          - type: string
-          - type: 'null'
+            - type: string
+            - type: 'null'
           title: Transcript
       type: object
       required:
-      - id
-      - title
-      - short_desc
-      - channel
-      - duration
-      - views
-      - publish_time
-      - url_suffix
+        - id
+        - title
+        - short_desc
+        - channel
+        - duration
+        - views
+        - publish_time
+        - url_suffix
       title: Video
-      description: Video model
+      description: Video model.
     VideoTranscript:
       properties:
         id:
@@ -643,10 +413,10 @@ components:
           title: Text
       type: object
       required:
-      - id
-      - text
+        - id
+        - text
       title: VideoTranscript
-      description: Video transcript model
+      description: Video transcript model.
   securitySchemes:
     APIKeyQuery:
       type: apiKey
