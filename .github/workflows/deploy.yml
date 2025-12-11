@@ -16,5 +16,5 @@ jobs:
       - uses: actions/checkout@v2
       - name: Deploy via curl
         run: |
-          curl -v 'https://${{ secrets.API_HOST }}/update-upstream/indy-news' -H 'Authorization: Bearer ${{ secrets.API_KEY }}'
+          curl -v 'https://${{ secrets.API_HOST }}/update-upstream/indy-news/indy-news-app' -H 'Authorization: Bearer ${{ secrets.API_KEY }}'
           echo "Deployed"

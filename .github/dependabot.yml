@@ -17,10 +17,17 @@ updates:
     commit-message:
       prefix: 'deps'
       include: 'scope'
+    ignore:
+      - dependency-name: '*'
+        update-types:
+          - version-update:semver-major
     groups:
       all-dependencies:
         patterns:
           - '*'
+        update-types:
+          - minor
+          - patch
 
   # Enable version updates for GitHub Actions
   - package-ecosystem: 'github-actions'
@@ -36,6 +43,6 @@ updates:
       prefix: 'ci'
       include: 'scope'
     groups:
-      all-actions:
+      all-dependencies:
         patterns:
           - '*'
