@@ -1,11 +1,11 @@
 aiohttp==3.13.3
-dateparser==1.2.2
+dateparser==1.3.0
 python-dotenv==1.2.1
-fastapi==0.128.0
+fastapi==0.128.1
 httpx==0.28.1
 munch==4.0.0
 PyYAML==6.0.3
-streamlit==1.53.1
+streamlit==1.54.0
 substack-api==1.1.3
 twikit==2.3.3
 uvicorn==0.40.0
