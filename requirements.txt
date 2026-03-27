@@ -1,5 +1,5 @@
 aiohttp==3.13.3
-dateparser==1.3.0
+dateparser==1.4.0
 python-dotenv==1.2.2
 fastapi==0.135.2
 httpx==0.28.1
