@@ -8,5 +8,5 @@ PyYAML==6.0.3
 streamlit==1.56.0
 substack-api==1.1.3
 twikit==2.3.3
-uvicorn==0.43.0
+uvicorn==0.44.0
 youtube-transcript-api==1.2.4
