@@ -1,6 +1,6 @@
 aiohttp==3.14.3
 dateparser==1.4.2
-python-dotenv==1.2.2
+python-dotenv==1.2.3
 fastapi==0.141.1
 httpx==0.28.1
 munch==4.0.0
